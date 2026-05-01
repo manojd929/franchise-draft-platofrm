@@ -70,7 +70,7 @@ export function RemoveTeamOwnerButton({
         type="button"
         variant="outline"
         className={cn(
-          "min-h-11 w-full touch-manipulation border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive sm:w-auto sm:min-w-[7rem]",
+          "h-8 min-h-8 w-full px-3 text-xs touch-manipulation border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive sm:w-auto sm:min-w-[5.5rem] sm:px-3",
           className,
         )}
         onClick={() => {

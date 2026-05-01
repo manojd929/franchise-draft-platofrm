@@ -63,24 +63,54 @@ export function TeamsQuickAdd({
       className="grid gap-4 rounded-xl border border-border/70 bg-card/40 p-6 backdrop-blur-md"
       onSubmit={(event) => void handleSubmit(event)}
     >
-      <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.5fr)_auto] md:items-end">
-        <div className="space-y-2">
-          <Label htmlFor="team-name">Franchise name</Label>
-          <Input id="team-name" name="name" required minLength={2} placeholder="Court Crushers" />
+      <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.75fr)_auto] md:grid-rows-[auto_auto] md:gap-x-4 md:gap-y-2">
+        <div className="space-y-2 md:contents">
+          <Label htmlFor="team-name" className="md:col-start-1 md:row-start-1">
+            Franchise name
+          </Label>
+          <Input
+            id="team-name"
+            name="name"
+            required
+            minLength={2}
+            placeholder="Court Crushers"
+            className="md:col-start-1 md:row-start-2"
+          />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="short">Ticker</Label>
-          <Input id="short" name="shortName" maxLength={8} placeholder="CCR" />
+        <div className="space-y-2 md:contents">
+          <Label htmlFor="short" className="md:col-start-2 md:row-start-1">
+            Ticker
+          </Label>
+          <Input
+            id="short"
+            name="shortName"
+            maxLength={8}
+            placeholder="CCR"
+            className="md:col-start-2 md:row-start-2"
+          />
         </div>
-        <OwnerPicker
-          id="quick-owner"
-          label="Franchise owner"
-          value={ownerUserId}
-          onChange={setOwnerUserId}
-          people={assignablePeople}
-        />
-        <div className="flex md:justify-end">
-          <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
+        <div className="space-y-2 md:contents">
+          <Label htmlFor="quick-owner" className="md:col-start-3 md:row-start-1">
+            Franchise owner
+          </Label>
+          <div className="min-w-0 md:col-start-3 md:row-start-2">
+            <OwnerPicker
+              id="quick-owner"
+              label="Franchise owner"
+              hideLabel
+              value={ownerUserId}
+              onChange={setOwnerUserId}
+              people={assignablePeople}
+              className="w-full"
+            />
+          </div>
+        </div>
+        <div className="flex md:col-start-4 md:row-start-2 md:self-end md:justify-end">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="h-8 w-full min-w-[10rem] md:w-auto"
+          >
             {isSubmitting ? "Saving…" : "Add franchise"}
           </Button>
         </div>

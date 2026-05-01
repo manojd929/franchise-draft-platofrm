@@ -104,14 +104,14 @@ export default async function TeamsPage({ params }: PageProps) {
             ) : (
               teams.map((team) => (
                 <TableRow key={team.id}>
-                  <TableCell className="font-medium">{team.name}</TableCell>
-                  <TableCell>{team.shortName ?? "—"}</TableCell>
-                  <TableCell>
-                    <div className="flex min-w-0 max-w-[min(22rem,85vw)] flex-col gap-2 sm:max-w-none">
-                      <span className="min-w-0 truncate text-sm">
+                  <TableCell className="align-middle font-medium">{team.name}</TableCell>
+                  <TableCell className="align-middle">{team.shortName ?? "—"}</TableCell>
+                  <TableCell className="align-middle">
+                    <div className="flex min-w-0 max-w-[min(26rem,92vw)] flex-col gap-2 lg:max-w-none lg:flex-row lg:items-center lg:gap-3">
+                      <span className="min-w-0 flex-1 text-sm leading-snug break-words">
                         {team.owner ? (team.owner.displayName ?? team.owner.email) : "—"}
                       </span>
-                      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                      <div className="flex shrink-0 flex-wrap items-center gap-2">
                         <TeamOwnerEditDialog
                           tournamentSlug={slug}
                           assignablePeople={assignablePeople}
@@ -138,8 +138,8 @@ export default async function TeamsPage({ params }: PageProps) {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right align-top">
-                    <div className="flex justify-end pt-0 sm:pt-1">
+                  <TableCell className="text-right align-middle">
+                    <div className="flex justify-end">
                       <TeamEditDialog
                         tournamentSlug={slug}
                         uploadsEnabled={uploadsEnabled}

@@ -1,9 +1,11 @@
+import { UserRole } from "@/generated/prisma/enums";
 import type { AssignablePerson } from "@/types/assignable-person";
 import { prisma } from "@/lib/prisma";
 
 /**
  * People eligible to be franchise owners for this tournament only:
  * - Excludes the tournament commissioner entirely (Admin runs separately — use another login).
+ * - Excludes league admin accounts (`UserRole.ADMIN`) — they run the auction, not franchise bidding.
  * - Excludes anyone already owning a team in another tournament,
  *   unless they're already an owner in THIS tournament (so edits/reassignment keep labels).
  * - Re-attaches profiles for current-team owners not covered above (odd legacy rows).
@@ -31,7 +33,7 @@ export async function buildFranchiseOwnerAssigneeList(params: {
   const currentOwners = new Set(params.existingTeamOwnerIds);
 
   const candidates = await prisma.userProfile.findMany({
-    where: { deletedAt: null },
+    where: { deletedAt: null, role: { not: UserRole.ADMIN } },
     select: { id: true, email: true, displayName: true },
   });
 
@@ -57,7 +59,11 @@ export async function buildFranchiseOwnerAssigneeList(params: {
   const orphans =
     orphanIds.length > 0
       ? await prisma.userProfile.findMany({
-          where: { id: { in: orphanIds }, deletedAt: null },
+          where: {
+            id: { in: orphanIds },
+            deletedAt: null,
+            role: { not: UserRole.ADMIN },
+          },
           select: { id: true, email: true, displayName: true },
         })
       : [];

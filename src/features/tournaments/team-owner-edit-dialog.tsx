@@ -71,9 +71,8 @@ export function TeamOwnerEditDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <Button
         variant="outline"
-        size="sm"
         type="button"
-        className="min-h-11 touch-manipulation sm:min-h-9"
+        className="h-8 min-h-8 px-3 text-xs touch-manipulation sm:h-8 sm:min-h-8"
         onClick={openDialog}
       >
         {team.ownerUserId?.trim() ? "Change owner" : "Assign owner"}

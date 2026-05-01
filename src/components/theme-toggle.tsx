@@ -2,7 +2,7 @@
 
 import { Monitor, Moon, Sun } from "lucide-react";
 
-import { type AppTheme, useAppTheme } from "@/components/app-theme-provider";
+import { useAppTheme, useResolvedTheme } from "@/components/app-theme-provider";
 import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,6 +20,7 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ className }: ThemeToggleProps) {
   const { theme, setTheme } = useAppTheme();
+  const resolved = useResolvedTheme();
 
   return (
     <DropdownMenu>
@@ -32,14 +33,21 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
         aria-label="Color theme"
         aria-haspopup="menu"
       >
-        <Sun className="hidden dark:block" aria-hidden />
-        <Moon className="block dark:hidden" aria-hidden />
+        {resolved === "dark" ? (
+          <Moon className="size-4" aria-hidden />
+        ) : (
+          <Sun className="size-4" aria-hidden />
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[11rem]">
         <DropdownMenuLabel>Appearance</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={theme}
-          onValueChange={(value) => setTheme(value as AppTheme)}
+          onValueChange={(value) => {
+            if (value === "light" || value === "dark" || value === "system") {
+              setTheme(value);
+            }
+          }}
         >
           <DropdownMenuRadioItem value="light" closeOnClick className="gap-2">
             <Sun className="size-4" aria-hidden />

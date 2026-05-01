@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -23,6 +24,21 @@ type AppThemeContextValue = {
 
 const AppThemeContext = createContext<AppThemeContextValue | null>(null);
 
+function readStoredTheme(enableSystem: boolean, fallback: AppTheme): AppTheme {
+  try {
+    const raw = window.localStorage.getItem(APP_THEME_STORAGE_KEY);
+    if (raw === "light" || raw === "dark") {
+      return raw;
+    }
+    if (raw === "system" && enableSystem) {
+      return "system";
+    }
+  } catch {
+    /* ignore */
+  }
+  return fallback;
+}
+
 function resolveAppliedTheme(theme: AppTheme): "dark" | "light" {
   if (theme === "system") {
     if (typeof window === "undefined") return "dark";
@@ -35,6 +51,21 @@ function applyThemeClass(applied: "dark" | "light"): void {
   const root = document.documentElement;
   root.classList.remove("light", "dark");
   root.classList.add(applied);
+}
+
+function applyResolvedTheme(themeMode: AppTheme, disableTransition: boolean): void {
+  const applied = resolveAppliedTheme(themeMode);
+  if (disableTransition) {
+    const root = document.documentElement;
+    const previous = root.style.transition;
+    root.style.transition = "none";
+    applyThemeClass(applied);
+    requestAnimationFrame(() => {
+      root.style.transition = previous;
+    });
+    return;
+  }
+  applyThemeClass(applied);
 }
 
 interface AppThemeProviderProps {
@@ -52,65 +83,34 @@ export function AppThemeProvider({
   disableTransitionOnChange = false,
 }: AppThemeProviderProps) {
   const [theme, setThemeState] = useState<AppTheme>(defaultTheme);
-  const hasHydratedThemeRef = useRef(false);
+  const didSyncFromStorageRef = useRef(false);
 
-  useEffect(() => {
-    queueMicrotask(() => {
-      try {
-        const stored = window.localStorage.getItem(
-          APP_THEME_STORAGE_KEY,
-        ) as AppTheme | null;
-        if (stored === "light" || stored === "dark") {
-          setThemeState(stored);
-          hasHydratedThemeRef.current = true;
-          return;
-        }
-        if (stored === "system" && enableSystem) {
-          setThemeState("system");
-          hasHydratedThemeRef.current = true;
-          return;
-        }
-      } catch {
-        /* ignore */
-      }
-      setThemeState(defaultTheme);
-      hasHydratedThemeRef.current = true;
-    });
-  }, [defaultTheme, enableSystem]);
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
 
-  useEffect(() => {
-    const applied = resolveAppliedTheme(theme);
-
-    if (disableTransitionOnChange) {
-      const root = document.documentElement;
-      const previous = root.style.transition;
-      root.style.transition = "none";
-      applyThemeClass(applied);
-      requestAnimationFrame(() => {
-        root.style.transition = previous;
-      });
+    if (!didSyncFromStorageRef.current) {
+      didSyncFromStorageRef.current = true;
+      const stored = readStoredTheme(enableSystem, defaultTheme);
+      setThemeState(stored);
+      applyResolvedTheme(stored, disableTransitionOnChange);
       return;
     }
 
-    applyThemeClass(applied);
-  }, [disableTransitionOnChange, theme]);
-
-  useEffect(() => {
-    if (!hasHydratedThemeRef.current) return;
+    applyResolvedTheme(theme, disableTransitionOnChange);
     try {
       window.localStorage.setItem(APP_THEME_STORAGE_KEY, theme);
     } catch {
       /* ignore */
     }
-  }, [theme]);
+  }, [theme, defaultTheme, enableSystem, disableTransitionOnChange]);
 
   useEffect(() => {
     if (!enableSystem || theme !== "system") return undefined;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = () => applyThemeClass(resolveAppliedTheme("system"));
+    const handler = () => applyResolvedTheme("system", disableTransitionOnChange);
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
-  }, [enableSystem, theme]);
+  }, [disableTransitionOnChange, enableSystem, theme]);
 
   const setTheme = useCallback((next: AppTheme) => {
     setThemeState(next);

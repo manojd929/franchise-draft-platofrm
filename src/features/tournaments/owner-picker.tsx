@@ -23,6 +23,8 @@ interface OwnerPickerProps {
   onChange: (userId: string) => void;
   people: AssignablePerson[];
   className?: string;
+  /** When true, only the select is rendered — pair with a sibling Label that uses the same `id`. */
+  hideLabel?: boolean;
 }
 
 export function OwnerPicker({
@@ -32,6 +34,7 @@ export function OwnerPicker({
   onChange,
   people,
   className,
+  hideLabel = false,
 }: OwnerPickerProps) {
   const trimmed = value.trim();
   const selectValue = trimmed === "" ? NONE_VALUE : trimmed;
@@ -39,8 +42,8 @@ export function OwnerPicker({
     trimmed === "" ? undefined : people.find((person) => person.id === trimmed);
 
   return (
-    <div className={cn("space-y-2", className)}>
-      <Label htmlFor={id}>{label}</Label>
+    <div className={cn(!hideLabel && "space-y-2", className)}>
+      {hideLabel ? null : <Label htmlFor={id}>{label}</Label>}
       <Select
         value={selectValue}
         onValueChange={(next) => {
@@ -51,7 +54,11 @@ export function OwnerPicker({
           onChange(next);
         }}
       >
-        <SelectTrigger id={id} className="w-full min-w-0 max-w-full">
+        <SelectTrigger
+          id={id}
+          aria-label={hideLabel ? label : undefined}
+          className="w-full min-w-0 max-w-full"
+        >
           <SelectValue placeholder="Choose someone…">
             {selectValue === NONE_VALUE
               ? undefined

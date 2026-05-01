@@ -361,23 +361,35 @@ export async function updatePlayer(userId: string, input: UpdatePlayerInput) {
       tournamentId,
       deletedAt: null,
     },
-    select: { category: true },
+    select: { category: true, linkedOwnerUserId: true },
   });
 
   if (!existing) {
     throw new TournamentServiceError("Player not found.");
   }
 
+  const trimmedName = input.name.trim();
+
   await prisma.player.update({
     where: { id: input.playerId },
     data: {
-      name: input.name.trim(),
+      name: trimmedName,
       photoUrl: input.photoUrl?.trim() ? input.photoUrl.trim() : null,
       category: input.category,
       gender: input.gender,
       notes: input.notes?.trim() ? input.notes.trim() : null,
     },
   });
+
+  if (existing.linkedOwnerUserId) {
+    await prisma.userProfile.updateMany({
+      where: {
+        id: existing.linkedOwnerUserId,
+        deletedAt: null,
+      },
+      data: { displayName: trimmedName },
+    });
+  }
 
   if (existing.category !== input.category) {
     await reconcileSquadRulesForTournament(tournamentId);

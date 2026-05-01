@@ -193,6 +193,7 @@ export async function updatePlayerAction(
     const slug = parsed.data.tournamentSlug;
     revalidatePath(`/tournament/${slug}`, "layout");
     revalidatePath(`/tournament/${slug}/players`);
+    revalidatePath(`/tournament/${slug}/teams`);
     revalidatePath(`/tournament/${slug}/rules`);
     return { ok: true, slug };
   } catch (e) {
