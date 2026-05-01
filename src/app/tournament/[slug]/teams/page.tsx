@@ -8,9 +8,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { FranchiseOwnersSummary } from "@/features/tournaments/franchise-owners-summary";
 import { InviteOwnerPanel } from "@/features/tournaments/invite-owner-panel";
 import { TeamEditDialog } from "@/features/tournaments/team-edit-dialog";
 import { TeamsQuickAdd } from "@/features/tournaments/teams-quick-add";
+import { buildFranchiseOwnerAssigneeList } from "@/lib/data/franchise-owner-assignees";
 import { getSessionUser } from "@/lib/auth/session";
 import { requireTournamentAccess } from "@/lib/data/tournament-access";
 import { prisma } from "@/lib/prisma";
@@ -35,19 +37,22 @@ export default async function TeamsPage({ params }: PageProps) {
   const invitingSupported = isLeagueOwnerInviteConfigured();
   const uploadsEnabled = isLeagueImageUploadConfigured();
 
-  const assignablePeople = await prisma.userProfile.findMany({
-    where: { deletedAt: null },
-    select: { id: true, email: true, displayName: true },
-    orderBy: { updatedAt: "desc" },
-    take: 150,
-  });
-
   const teams = await prisma.team.findMany({
     where: { tournamentId: tournament.id, deletedAt: null },
     orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
     include: {
       owner: { select: { email: true, displayName: true } },
     },
+  });
+
+  const existingTeamOwnerIds = teams
+    .map((team) => team.ownerUserId)
+    .filter((id): id is string => Boolean(id));
+
+  const assignablePeople = await buildFranchiseOwnerAssigneeList({
+    tournamentId: tournament.id,
+    commissionerUserId: tournament.createdById,
+    existingTeamOwnerIds,
   });
 
   return (
@@ -61,6 +66,15 @@ export default async function TeamsPage({ params }: PageProps) {
       </header>
 
       <InviteOwnerPanel tournamentSlug={slug} invitingSupported={invitingSupported} />
+
+      <FranchiseOwnersSummary
+        assignablePeople={assignablePeople}
+        teams={teams.map((team) => ({
+          id: team.id,
+          name: team.name,
+          ownerUserId: team.ownerUserId,
+        }))}
+      />
 
       <TeamsQuickAdd
         tournamentSlug={slug}

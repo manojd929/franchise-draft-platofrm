@@ -8,13 +8,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatAssignablePersonLabel } from "@/lib/format-assignable-person-label";
+import type { AssignablePerson } from "@/types/assignable-person";
 import { cn } from "@/lib/utils";
 
-export interface AssignablePerson {
-  id: string;
-  email: string;
-  displayName: string | null;
-}
+export type { AssignablePerson };
 
 const NONE_VALUE = "__none__";
 
@@ -37,6 +35,8 @@ export function OwnerPicker({
 }: OwnerPickerProps) {
   const trimmed = value.trim();
   const selectValue = trimmed === "" ? NONE_VALUE : trimmed;
+  const selectedPerson =
+    trimmed === "" ? undefined : people.find((person) => person.id === trimmed);
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -52,15 +52,19 @@ export function OwnerPicker({
         }}
       >
         <SelectTrigger id={id} className="w-full min-w-0 max-w-full">
-          <SelectValue placeholder="Choose someone…" />
+          <SelectValue placeholder="Choose someone…">
+            {selectValue === NONE_VALUE
+              ? undefined
+              : selectedPerson
+                ? formatAssignablePersonLabel(selectedPerson)
+                : "Owner profile unavailable"}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={NONE_VALUE}>No owner yet</SelectItem>
           {people.map((person) => (
             <SelectItem key={person.id} value={person.id}>
-              {person.displayName
-                ? `${person.displayName} (${person.email})`
-                : person.email}
+              {formatAssignablePersonLabel(person)}
             </SelectItem>
           ))}
         </SelectContent>
