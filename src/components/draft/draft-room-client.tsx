@@ -31,6 +31,11 @@ interface DraftRoomClientProps {
   initialSnapshot: DraftSnapshotDto;
   viewerUserId: string | null;
   enableOwnerPick: boolean;
+  /**
+   * Franchise-owner phone route: never show nominate controls unless this login owns the on-clock team;
+   * hide full snake order; clarify copy so other franchises' turns are read-only.
+   */
+  franchiseOwnerPhoneMode?: boolean;
   /** When set, rendering uses this snapshot (e.g. admin embed with single upstream sync). */
   controlledSnapshot?: DraftSnapshotDto;
   /** Subscribe to polling/realtime updates (disable when parent owns sync). */
@@ -42,6 +47,7 @@ export function DraftRoomClient({
   initialSnapshot,
   viewerUserId,
   enableOwnerPick,
+  franchiseOwnerPhoneMode = false,
   controlledSnapshot,
   syncEnabled = true,
 }: DraftRoomClientProps) {
@@ -82,6 +88,11 @@ export function DraftRoomClient({
   }, [effectiveSnapshot.currentSlotIndex, effectiveSnapshot.draftSlots]);
 
   const currentTeam = currentTurnTeamId ? teamsById[currentTurnTeamId] : null;
+
+  const viewerFranchiseTeams = useMemo(() => {
+    if (!viewerUserId) return [];
+    return effectiveSnapshot.teams.filter((t) => t.ownerUserId === viewerUserId);
+  }, [effectiveSnapshot.teams, viewerUserId]);
 
   const viewerOwnsClock =
     Boolean(enableOwnerPick) &&
@@ -130,13 +141,22 @@ export function DraftRoomClient({
         const bv =
           Number(b.hasConfirmedPick) +
           Number(Boolean(b.assignedTeamId && !b.hasConfirmedPick));
-        return av - bv;
+        if (av !== bv) {
+          return av - bv;
+        }
+        return Number(a.runsFranchiseLogin) - Number(b.runsFranchiseLogin);
       });
     }
     return sorted;
   }, [categoryFilter, genderFilter, search, effectiveSnapshot.players, sortMode]);
 
   const draftLive = effectiveSnapshot.draftPhase === DraftPhase.LIVE;
+
+  const hideFranchiseOwnerNominate =
+    franchiseOwnerPhoneMode && (!draftLive || !viewerOwnsClock);
+
+  const nominateActionsAllowed =
+    !franchiseOwnerPhoneMode || viewerOwnsClock;
 
   const genderKeys = Object.keys(GENDER_LABEL) as Gender[];
 
@@ -175,7 +195,40 @@ export function DraftRoomClient({
             >
               {currentTeam?.name ?? "-"}
             </div>
-            {viewerOwnsClock ? (
+            {franchiseOwnerPhoneMode ? (
+              <>
+                {viewerFranchiseTeams.length > 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-semibold text-foreground">Your franchise</span>
+                    {viewerFranchiseTeams.length > 1 ? "s" : ""}:{" "}
+                    {viewerFranchiseTeams.map((t) => t.name).join(", ")}
+                  </p>
+                ) : (
+                  <p className="text-xs text-amber-700 dark:text-amber-400">
+                    No franchise is assigned to this login yet. Ask the commissioner to set you as
+                    owner on Teams.
+                  </p>
+                )}
+                {draftLive && currentTeam ? (
+                  viewerOwnsClock ? (
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                      Your franchise is on the clock — tap a player below.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">{currentTeam.name}</span> is
+                      picking now. You cannot submit a pick for other franchises; browse only until
+                      it is your team&apos;s turn.
+                    </p>
+                  )
+                ) : draftLive ? (
+                  <p className="text-xs text-muted-foreground">
+                    Waiting for the next pick slot. You only submit picks when your franchise is
+                    highlighted.
+                  </p>
+                ) : null}
+              </>
+            ) : viewerOwnsClock ? (
               <p className="text-xs text-emerald-600 dark:text-emerald-400">It is your turn to pick.</p>
             ) : (
               <p className="text-xs text-muted-foreground">
@@ -187,30 +240,37 @@ export function DraftRoomClient({
 
         <div className="rounded-xl border border-border/80 bg-card/30 p-3 backdrop-blur-md sm:p-4">
           <p className="text-xs font-medium text-muted-foreground">Pick order (snake)</p>
-          <ScrollArea className="mt-3 h-44 pr-3 sm:h-64">
-            <ol className="space-y-2 text-sm">
-              {effectiveSnapshot.draftSlots.map((slot) => {
-                const team = teamsById[slot.teamId];
-                const active = slot.slotIndex === effectiveSnapshot.currentSlotIndex;
-                return (
-                  <li
-                    key={slot.slotIndex}
-                    className={cn(
-                      "flex items-center justify-between rounded-md border px-2 py-1.5",
-                      active
-                        ? "border-primary/70 bg-primary/10"
-                        : "border-transparent bg-muted/20",
-                    )}
-                  >
-                    <span className="text-xs text-muted-foreground">
-                      #{slot.slotIndex + 1}
-                    </span>
-                    <span className="truncate font-medium">{team?.name ?? slot.teamId}</span>
-                  </li>
-                );
-              })}
-            </ol>
-          </ScrollArea>
+          {franchiseOwnerPhoneMode ? (
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+              Full turn order is hidden on this screen so you only act for your franchise. The room
+              display shows everyone&apos;s order.
+            </p>
+          ) : (
+            <ScrollArea className="mt-3 h-44 pr-3 sm:h-64">
+              <ol className="space-y-2 text-sm">
+                {effectiveSnapshot.draftSlots.map((slot) => {
+                  const team = teamsById[slot.teamId];
+                  const active = slot.slotIndex === effectiveSnapshot.currentSlotIndex;
+                  return (
+                    <li
+                      key={slot.slotIndex}
+                      className={cn(
+                        "flex items-center justify-between rounded-md border px-2 py-1.5",
+                        active
+                          ? "border-primary/70 bg-primary/10"
+                          : "border-transparent bg-muted/20",
+                      )}
+                    >
+                      <span className="text-xs text-muted-foreground">
+                        #{slot.slotIndex + 1}
+                      </span>
+                      <span className="truncate font-medium">{team?.name ?? slot.teamId}</span>
+                    </li>
+                  );
+                })}
+              </ol>
+            </ScrollArea>
+          )}
         </div>
 
         <div className="rounded-xl border border-border/80 bg-card/30 p-3 backdrop-blur-md sm:p-4">
@@ -298,17 +358,30 @@ export function DraftRoomClient({
           </div>
         </div>
 
+        {franchiseOwnerPhoneMode && draftLive && !viewerOwnsClock ? (
+          <div
+            className="rounded-xl border border-border/70 bg-muted/40 px-4 py-3 text-sm text-muted-foreground"
+            role="status"
+          >
+            Browse mode:{' '}
+            <span className="font-medium text-foreground">{currentTeam?.name ?? 'Another franchise'}</span>{' '}
+            is picking. Submit buttons appear only when your franchise is on the clock.
+          </div>
+        ) : null}
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {filteredPlayers.map((player) => {
             const team = player.assignedTeamId
               ? teamsById[player.assignedTeamId]
               : undefined;
             const canNominateThisCard =
+              nominateActionsAllowed &&
               draftLive &&
               viewerOwnsClock &&
               !player.hasConfirmedPick &&
               !player.isUnavailable &&
               !player.isLocked &&
+              !player.runsFranchiseLogin &&
               !player.assignedTeamId;
 
             return (
@@ -317,6 +390,7 @@ export function DraftRoomClient({
                 player={player}
                 team={team}
                 emphasize={Boolean(canNominateThisCard)}
+                hideNominateControl={hideFranchiseOwnerNominate}
                 onNominate={
                   canNominateThisCard
                     ? () => void handleNominate(player.id)

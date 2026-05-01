@@ -15,6 +15,8 @@ interface PlayerCardProps {
   emphasize: boolean;
   onNominate?: () => void;
   nominateDisabled?: boolean;
+  /** When true, never render nominate control (defense-in-depth for franchise-owner phone UI). */
+  hideNominateControl?: boolean;
 }
 
 const badgeWrap =
@@ -26,6 +28,7 @@ export function PlayerCard({
   emphasize,
   onNominate,
   nominateDisabled,
+  hideNominateControl,
 }: PlayerCardProps) {
   const picked = Boolean(player.hasConfirmedPick && player.assignedTeamId);
   const pending =
@@ -52,6 +55,10 @@ export function PlayerCard({
             !pending &&
             emphasize &&
             "cursor-pointer border-primary/40 shadow-[0_0_28px_-10px_rgba(56,189,248,0.55)] hover:border-primary hover:shadow-[0_0_34px_-8px_rgba(56,189,248,0.65)]",
+          !picked &&
+            !pending &&
+            player.runsFranchiseLogin &&
+            "opacity-75 border-muted-foreground/30 bg-muted/30",
         )}
       >
         {(picked || pending) && (
@@ -102,6 +109,11 @@ export function PlayerCard({
                   Locked
                 </Badge>
               ) : null}
+              {player.runsFranchiseLogin ? (
+                <Badge variant="outline" className={cn(badgeWrap, "text-center")}>
+                  Runs a franchise
+                </Badge>
+              ) : null}
             </div>
           </div>
 
@@ -126,7 +138,7 @@ export function PlayerCard({
               Waiting for organizer · {team.shortName ?? team.name}
             </div>
           ) : null}
-          {onNominate && !picked ? (
+          {onNominate && !picked && !hideNominateControl ? (
             <button
               type="button"
               disabled={nominateDisabled}

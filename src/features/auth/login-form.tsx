@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ROUTES } from "@/constants/app";
 import { sanitizeNextPath } from "@/lib/navigation/sanitize-next-path";
-import { syncProfileAction } from "@/features/tournaments/actions";
+import { establishServerSessionAfterPasswordLogin } from "@/features/auth/establish-server-session-action";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -30,7 +30,7 @@ export function LoginForm() {
     setIsSubmitting(true);
     try {
       const supabase = createBrowserSupabaseClient();
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -39,7 +39,16 @@ export function LoginForm() {
         return;
       }
 
-      const syncResult = await syncProfileAction();
+      const session = data.session;
+      if (!session?.access_token || !session.refresh_token) {
+        setMessage("Sign-in did not return a session. Try again.");
+        return;
+      }
+
+      const syncResult = await establishServerSessionAfterPasswordLogin({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      });
       if (!syncResult.ok) {
         setMessage(syncResult.error);
         return;

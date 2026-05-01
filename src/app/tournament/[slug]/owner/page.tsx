@@ -39,6 +39,7 @@ export default async function OwnerViewPage({ params }: PageProps) {
         initialSnapshot={snapshot}
         viewerUserId={user.id}
         enableOwnerPick
+        franchiseOwnerPhoneMode
       />
     </div>
   );

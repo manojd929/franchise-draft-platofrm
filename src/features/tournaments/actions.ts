@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 
-import { syncUserProfile } from "@/lib/auth/profile";
 import { requireSessionUser } from "@/lib/auth/session";
 import {
   createLeagueOwnerAccount,
@@ -52,16 +51,6 @@ function handle(err: unknown): TournamentActionResult {
     return { ok: false, error: err.message };
   }
   return { ok: false, error: "Unexpected error. Try again." };
-}
-
-export async function syncProfileAction(): Promise<TournamentActionResult> {
-  try {
-    const user = await requireSessionUser();
-    await syncUserProfile(user);
-    return { ok: true };
-  } catch {
-    return { ok: false, error: "Unauthorized" };
-  }
 }
 
 export async function updateTournamentAction(

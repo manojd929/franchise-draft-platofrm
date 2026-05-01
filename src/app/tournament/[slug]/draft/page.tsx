@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { DraftRoomClient } from "@/components/draft/draft-room-client";
 import { getSessionUser } from "@/lib/auth/session";
+import { getTournamentBySlug } from "@/lib/data/tournament-access";
 import { fetchDraftSnapshotBySlug } from "@/services/draft-service";
 
 export const dynamic = "force-dynamic";
@@ -17,10 +18,15 @@ export default async function DraftFloorPage({ params }: PageProps) {
     redirect(`/login?next=/tournament/${slug}/draft`);
   }
 
-  const snapshot = await fetchDraftSnapshotBySlug(slug);
-  if (!snapshot) {
+  const [tournament, snapshot] = await Promise.all([
+    getTournamentBySlug(slug),
+    fetchDraftSnapshotBySlug(slug),
+  ]);
+  if (!tournament || !snapshot) {
     notFound();
   }
+
+  const franchiseOwnerPhoneMode = user.id !== tournament.createdById;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -39,6 +45,7 @@ export default async function DraftFloorPage({ params }: PageProps) {
         initialSnapshot={snapshot}
         viewerUserId={user.id}
         enableOwnerPick
+        franchiseOwnerPhoneMode={franchiseOwnerPhoneMode}
       />
     </div>
   );

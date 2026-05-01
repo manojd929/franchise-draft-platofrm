@@ -22,6 +22,8 @@ export interface DraftPlayerDto {
   notes: string | null;
   isUnavailable: boolean;
   isLocked: boolean;
+  /** True when roster row backs a commissioner-provisioned franchise-owner login (`Player.linkedOwnerUserId`). Never draftable in normal flows. */
+  runsFranchiseLogin: boolean;
   assignedTeamId: string | null;
   hasConfirmedPick: boolean;
 }

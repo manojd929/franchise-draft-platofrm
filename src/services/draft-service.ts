@@ -132,6 +132,7 @@ function mapSnapshot(t: NonNullable<Awaited<ReturnType<typeof getTournamentBySlu
         notes: player.notes,
         isUnavailable: player.isUnavailable,
         isLocked: player.isLocked,
+        runsFranchiseLogin: player.linkedOwnerUserId !== null,
         assignedTeamId: assignment?.teamId ?? null,
         hasConfirmedPick: assignment?.confirmed ?? false,
       };
@@ -256,6 +257,15 @@ async function validatePickAllowed(params: {
     },
   });
   if (existing) throw new DraftServiceError("Player already drafted.");
+
+  if (
+    player.linkedOwnerUserId !== null &&
+    !params.overrideValidation
+  ) {
+    throw new DraftServiceError(
+      "Roster rows tied to another franchise owner's login cannot be drafted in the auction.",
+    );
+  }
 
   if (params.overrideValidation) return;
 

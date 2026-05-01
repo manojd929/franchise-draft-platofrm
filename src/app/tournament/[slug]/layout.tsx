@@ -21,11 +21,11 @@ export default async function TournamentLayout({
 
   const links = [
     { href: ROUTES.tournament(slug), label: "Home" },
-    { href: ROUTES.teams(slug), label: "Teams" },
     { href: ROUTES.players(slug), label: "Players" },
+    { href: ROUTES.teams(slug), label: "Teams" },
     { href: ROUTES.rules(slug), label: "Rules" },
-    { href: ROUTES.draft(slug), label: "Auction" },
-    { href: ROUTES.admin(slug), label: "Admin" },
+    { href: ROUTES.admin(slug), label: "Manage auction" },
+    { href: ROUTES.draft(slug), label: "Auction screen" },
     { href: ROUTES.tv(slug), label: "Big screen" },
     { href: ROUTES.owner(slug), label: "Owner" },
   ];
