@@ -54,7 +54,7 @@ export function LoginForm() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-6 rounded-2xl border border-border/70 bg-card/40 p-8 backdrop-blur-xl">
+    <div className="mx-auto flex w-full max-w-md flex-col gap-6 rounded-2xl border border-border/70 bg-card/85 p-8 text-card-foreground shadow-lg backdrop-blur-xl">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Operator access</h1>
         <p className="mt-2 text-sm text-muted-foreground">
