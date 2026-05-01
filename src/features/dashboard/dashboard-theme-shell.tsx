@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import {
   DASHBOARD_THEME_STORAGE_KEY,
@@ -69,15 +70,18 @@ export function DashboardThemeShell({
 
       <div className="sticky top-0 z-20 border-b border-border/40 bg-background/55 px-4 py-3 backdrop-blur-md md:px-6">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">Floor theme</span>
-            <span className="hidden sm:inline"> — </span>
-            <span className="block sm:inline">
-              {dashboardSportThemeOptions.find((o) => o.id === theme)?.hint ?? ""}
-            </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <ThemeToggle />
+            <div className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">Floor theme</span>
+              <span className="hidden sm:inline"> — </span>
+              <span className="block sm:inline">
+                {dashboardSportThemeOptions.find((o) => o.id === theme)?.hint ?? ""}
+              </span>
+            </div>
           </div>
           <div
-            className="flex flex-wrap gap-1.5"
+            className="flex flex-wrap gap-1.5 sm:justify-end"
             role="radiogroup"
             aria-label="Dashboard sport background"
           >

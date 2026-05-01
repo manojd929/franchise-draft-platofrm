@@ -1,19 +1,27 @@
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { ThemeToggle } from "@/components/theme-toggle";
 import { LoginForm } from "@/features/auth/login-form";
 import { ROUTES } from "@/constants/app";
 
 export default function LoginPage() {
   return (
-    <div className="dark flex min-h-screen flex-col bg-[radial-gradient(ellipse_at_top,_rgba(56,189,248,0.15),_transparent_55%),#020617] px-6 py-16 text-foreground">
-      <div className="mb-10 flex justify-between text-sm">
+    <div className="relative flex min-h-screen flex-col bg-background px-6 py-16 text-foreground">
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-sky-500/[0.07] to-transparent dark:from-sky-500/[0.14]"
+        aria-hidden
+      />
+      <div className="mb-10 flex flex-wrap items-center justify-between gap-4 text-sm">
         <Link href={ROUTES.home} className="text-muted-foreground hover:text-foreground">
           ← Back to landing
         </Link>
-        <Link href={ROUTES.dashboard} className="text-muted-foreground hover:text-foreground">
-          Dashboard →
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <ThemeToggle />
+          <Link href={ROUTES.dashboard} className="text-muted-foreground hover:text-foreground">
+            Dashboard →
+          </Link>
+        </div>
       </div>
       <Suspense
         fallback={

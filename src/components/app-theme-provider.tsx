@@ -12,14 +12,14 @@ import {
   type ReactNode,
 } from "react";
 
+import { APP_THEME_STORAGE_KEY } from "@/constants/theme-storage";
+
 export type AppTheme = "dark" | "light" | "system";
 
 type AppThemeContextValue = {
   theme: AppTheme;
   setTheme: (theme: AppTheme) => void;
 };
-
-const STORAGE_KEY = "theme";
 
 const AppThemeContext = createContext<AppThemeContextValue | null>(null);
 
@@ -57,7 +57,9 @@ export function AppThemeProvider({
   useEffect(() => {
     queueMicrotask(() => {
       try {
-        const stored = window.localStorage.getItem(STORAGE_KEY) as AppTheme | null;
+        const stored = window.localStorage.getItem(
+          APP_THEME_STORAGE_KEY,
+        ) as AppTheme | null;
         if (stored === "light" || stored === "dark") {
           setThemeState(stored);
           hasHydratedThemeRef.current = true;
@@ -96,7 +98,7 @@ export function AppThemeProvider({
   useEffect(() => {
     if (!hasHydratedThemeRef.current) return;
     try {
-      window.localStorage.setItem(STORAGE_KEY, theme);
+      window.localStorage.setItem(APP_THEME_STORAGE_KEY, theme);
     } catch {
       /* ignore */
     }
@@ -139,7 +141,7 @@ function getPreferredDarkSnapshot(): boolean {
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
-/** SSR default aligns with root `<html className="dark">`. */
+/** SSR default until client resolves stored preference or system. */
 function getPreferredDarkServerSnapshot(): boolean {
   return true;
 }
