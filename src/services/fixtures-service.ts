@@ -61,7 +61,6 @@ async function syncDoublesFixtureParticipantsForTournament(
       status: PickStatus.CONFIRMED,
       player: {
         deletedAt: null,
-        linkedOwnerUserId: null,
       },
     },
     orderBy: [{ slotIndex: "asc" }, { createdAt: "asc" }],

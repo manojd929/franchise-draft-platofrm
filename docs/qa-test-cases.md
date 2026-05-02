@@ -225,12 +225,22 @@ This QA plan validates the full doubles tournament lifecycle for production read
 1. Owner cannot confirm.
 2. Pick added only after admin confirmation.
 
+#### F3a. Owner-backed player is blocked from draft pool
+- Steps:
+1. Create or sync a player row with franchise-owner login attached.
+2. Open commissioner auction board and owner phone board.
+3. Try to nominate or confirm that owner-backed player through auction flow.
+- Expected:
+1. Owner-backed player does not appear as a normal draftable nominee.
+2. The row remains attached to that franchise roster instead of being draftable again.
+
 #### F4. Complete draft
 - Steps:
 1. Continue until all required slots are filled.
 - Expected:
 1. Draft enters `COMPLETED`.
 2. Fixtures unlock.
+3. Tournament navigation group becomes visible for both admin and owner.
 
 ### G. Fixtures and Match Operations
 
@@ -242,6 +252,15 @@ This QA plan validates the full doubles tournament lifecycle for production read
 1. 6 ties for 4 teams.
 2. 5 matches per tie.
 
+#### G1a. Owner-backed player participates in fixtures
+- Steps:
+1. Ensure at least one team has an owner-backed player row on its roster.
+2. Complete the auction.
+3. Generate fixtures.
+- Expected:
+1. Owner-backed player is eligible for automatic doubles pairings.
+2. The owner is not silently excluded from fixture participant rotation.
+
 #### G2. Owner fixtures visibility
 - Steps:
 1. Login as owner.
@@ -249,6 +268,14 @@ This QA plan validates the full doubles tournament lifecycle for production read
 - Expected:
 1. Owner sees ties and all match results.
 2. Owner cannot generate/regenerate fixtures.
+
+#### G2a. Tournament navigation stays hidden before auction completion
+- Steps:
+1. Login as admin before ending the auction.
+2. Login as owner before ending the auction.
+- Expected:
+1. Neither admin nor owner sees the Tournament nav group yet.
+2. Fixtures, leaderboard, and run surfaces are not shown in the tournament nav until auction completion.
 
 #### G3. Update match status/scores (admin)
 - Steps:

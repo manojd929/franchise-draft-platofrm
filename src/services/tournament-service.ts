@@ -773,7 +773,7 @@ export async function reconcileSquadRulesForTournament(
   }
 
   const totalPlayers = await prisma.player.count({
-    where: { tournamentId, deletedAt: null, linkedOwnerUserId: null },
+    where: { tournamentId, deletedAt: null },
   });
 
   const categoryRows = await prisma.rosterCategory.findMany({
@@ -790,7 +790,7 @@ export async function reconcileSquadRulesForTournament(
 
   const grouped = await prisma.player.groupBy({
     by: ["rosterCategoryId"],
-    where: { tournamentId, deletedAt: null, linkedOwnerUserId: null },
+    where: { tournamentId, deletedAt: null },
     _count: { _all: true },
   });
 
@@ -860,7 +860,7 @@ export async function saveSquadRules(userId: string, input: SquadRulesInput) {
   });
 
   const totalPlayers = await prisma.player.count({
-    where: { tournamentId, deletedAt: null, linkedOwnerUserId: null },
+    where: { tournamentId, deletedAt: null },
   });
 
   const categoryRows = await prisma.rosterCategory.findMany({
@@ -877,7 +877,7 @@ export async function saveSquadRules(userId: string, input: SquadRulesInput) {
 
   const grouped = await prisma.player.groupBy({
     by: ["rosterCategoryId"],
-    where: { tournamentId, deletedAt: null, linkedOwnerUserId: null },
+    where: { tournamentId, deletedAt: null },
     _count: { _all: true },
   });
 

@@ -20,6 +20,7 @@ Built with **Next.js 16** (App Router), **React 19**, **PostgreSQL** via **Prism
 - **Single source**: `src/lib/navigation/tournament-nav-links.ts` builds tournament chrome pills and hub card lists from whether the signed-in user is the tournament **`createdById`** commissioner.
 - **Commissioner path** (ops-focused): **Home**, **Roster groups**, **All Players**, **All Teams**, **Rules**, **Manage auction**, **Live roster board**.
 - **Participant/owner path** (read + participation): **Home**, **Roster groups**, **All Players**, **All Teams**, **Rules**, **Live roster board**, **My Team**.
+- **Tournament cluster gating**: the entire **Tournament** navigation group stays hidden for both commissioner and owner until the commissioner explicitly ends the auction and the tournament reaches `DraftPhase.COMPLETED`. That same transition reveals **Fixtures** and **Knockout board** to owners, and **Fixtures**, **Run tournament**, and **Knockout board** to commissioners.
 - **Live participation card**: when draft phase is `LIVE` or `PAUSED`, non-commissioners also see a **Participate in auction** hub card to open `/tournament/[slug]/draft`.
 - **Routes still exist**: `/tournament/[slug]/draft` and `/tournament/[slug]/owner` remain; `/owner` is now the **My Team** roster surface.
 
@@ -43,6 +44,12 @@ Requires **`SUPABASE_SERVICE_ROLE_KEY`** (server-only, never expose to the clien
 - **Orphan cleanup** (`deleteAuthUserIfNoOwnerReferences`): deletes Supabase user and soft-deletes profile when nothing references them; never removes `ADMIN` profiles.
 
 Eligible assignees for team ownership are derived from **`buildFranchiseOwnerAssigneeList`** (OWNER role / already linked-or-owning-in-this-league / not commissioner / not owning another tournament’s team unless already in this one, etc.).
+
+### Owner-backed player rows
+
+- A `Player.linkedOwnerUserId` row is still a **real player** on that franchise roster. It is not a non-playing placeholder for tournament operations.
+- Owner-backed player rows are **pre-attached to the owner's team**, so they **do not** appear as draftable auction nominations.
+- Owner-backed player rows **do** count in roster/category pool math, **do** appear on **My Team**, and **do** participate in generated fixtures and doubles pairings.
 
 ### Teams & ordering
 
@@ -268,9 +275,11 @@ Commissioners orchestrate live day from **Manage auction** plus this **Live rost
 ### Fixtures lifecycle
 
 - **Fixtures route**: `/tournament/[slug]/fixtures`
-- Fixtures unlock after draft is marked **`COMPLETED`**.
+- The full **Tournament** nav group stays hidden until the auction is marked **`COMPLETED`**.
+- Fixtures unlock only after the commissioner explicitly ends the auction and the draft is marked **`COMPLETED`**.
 - Commissioner can generate team round-robin ties from Fixtures.
 - Owners/participants get **read-only** fixtures + leaderboard view.
+- Generated doubles pairings use confirmed roster members from each team, including owner-backed player rows.
 
 ### Run tournament (admin ops)
 

@@ -40,4 +40,22 @@ describe("tournamentChromeNavGroups", () => {
       "Live roster board",
     ]);
   });
+
+  it("hides the entire tournament cluster before fixtures unlock", () => {
+    const commissionerGroups = tournamentChromeNavGroups("summer-cup", "commissioner", {
+      showFixtures: false,
+    });
+    const participantGroups = tournamentChromeNavGroups("summer-cup", "participant", {
+      showFixtures: false,
+    });
+
+    expect(commissionerGroups.map((group) => group.label)).toEqual([
+      "League",
+      "Auction",
+    ]);
+    expect(participantGroups.map((group) => group.label)).toEqual([
+      "League",
+      "Auction",
+    ]);
+  });
 });

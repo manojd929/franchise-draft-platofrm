@@ -65,7 +65,6 @@ export default async function RulesPage({ params }: PageProps) {
       where: {
         tournamentId: tournament.id,
         deletedAt: null,
-        linkedOwnerUserId: null,
       },
       _count: { _all: true },
     }),

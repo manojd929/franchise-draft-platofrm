@@ -29,12 +29,6 @@ export function tournamentChromeNavGroups(
   viewer: TournamentChromeNavViewer,
   options?: { showFixtures?: boolean },
 ): TournamentChromeNavGroup[] {
-  const fixturesLink = options?.showFixtures
-    ? [{ href: ROUTES.fixtures(slug), label: "Fixtures" as const }]
-    : [];
-  const leaderboardLink = options?.showFixtures
-    ? [{ href: ROUTES.leaderboard(slug), label: "Knockout board" as const }]
-    : [];
   const commissionerGroups: TournamentChromeNavGroup[] = [
     {
       id: "overview",
@@ -55,15 +49,17 @@ export function tournamentChromeNavGroups(
         { href: ROUTES.tv(slug), label: "Live roster board" },
       ],
     },
-    {
-      id: "tournament",
-      label: "Tournament",
-      links: [
-        ...fixturesLink,
-        { href: ROUTES.run(slug), label: "Run tournament" },
-        ...leaderboardLink,
-      ],
-    },
+    ...(options?.showFixtures
+      ? [{
+          id: "tournament" as const,
+          label: "Tournament",
+          links: [
+            { href: ROUTES.fixtures(slug), label: "Fixtures" as const },
+            { href: ROUTES.run(slug), label: "Run tournament" as const },
+            { href: ROUTES.leaderboard(slug), label: "Knockout board" as const },
+          ],
+        }]
+      : []),
   ];
 
   if (viewer === "participant") {
@@ -88,11 +84,16 @@ export function tournamentChromeNavGroups(
           { href: ROUTES.tv(slug), label: "Live roster board" },
         ],
       },
-      {
-        id: "tournament",
-        label: "Tournament",
-        links: [...fixturesLink, ...leaderboardLink],
-      },
+      ...(options?.showFixtures
+        ? [{
+            id: "tournament" as const,
+            label: "Tournament",
+            links: [
+              { href: ROUTES.fixtures(slug), label: "Fixtures" as const },
+              { href: ROUTES.leaderboard(slug), label: "Knockout board" as const },
+            ],
+          }]
+        : []),
     ];
   }
 
