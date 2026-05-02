@@ -1,20 +1,18 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { TournamentBrandingForm } from "@/features/tournaments/tournament-branding-form";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TOURNAMENT_FORMAT_LABEL } from "@/constants/tournament-format-labels";
+import {
+  PlayersCategoryDashboard,
+  type PlayersCategoryDashboardRow,
+} from "@/features/tournaments/players-category-dashboard";
+import { TournamentBrandingForm } from "@/features/tournaments/tournament-branding-form";
 import { getSessionUser } from "@/lib/auth/session";
+import { formatMinorUnitsForDisplay } from "@/lib/currency/player-entry-fee";
 import { getTournamentBySlug } from "@/lib/data/tournament-access";
-import { tournamentHubCardsForViewer } from "@/lib/navigation/tournament-nav-links";
+import { prisma } from "@/lib/prisma";
 import { isLeagueImageUploadConfigured } from "@/lib/uploads/league-image-blob-env";
-import { cn } from "@/lib/utils";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -30,12 +28,56 @@ export default async function TournamentHubPage({ params }: PageProps) {
   const user = await getSessionUser();
   const isCommissioner = Boolean(user && user.id === tournament.createdById);
   const canEditBranding = isCommissioner;
-  const hubCards = tournamentHubCardsForViewer({
-    isCommissioner,
-    draftPhase: tournament.draftPhase,
-    showFixtures: tournament.draftPhase === "COMPLETED",
-  });
   const uploadsEnabled = isLeagueImageUploadConfigured();
+  const [playersCount, teamsCount, rosterGroups, groupedPlayers] = await Promise.all([
+    prisma.player.count({
+      where: { tournamentId: tournament.id, deletedAt: null },
+    }),
+    prisma.team.count({
+      where: { tournamentId: tournament.id, deletedAt: null },
+    }),
+    prisma.rosterCategory.findMany({
+      where: { tournamentId: tournament.id, archivedAt: null },
+      orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
+      select: { id: true, name: true, colorHex: true },
+    }),
+    prisma.player.groupBy({
+      by: ["rosterCategoryId"],
+      where: { tournamentId: tournament.id, deletedAt: null },
+      _count: { _all: true },
+    }),
+  ]);
+  const countsByCategory = new Map<string, number>();
+  for (const row of groupedPlayers) {
+    countsByCategory.set(row.rosterCategoryId, row._count._all);
+  }
+  const dashboardRows: PlayersCategoryDashboardRow[] = rosterGroups.map((category) => ({
+    rosterCategoryId: category.id,
+    name: category.name,
+    colorHex: category.colorHex,
+    count: countsByCategory.get(category.id) ?? 0,
+  }));
+  const tournamentSummaryItems = [
+    {
+      label: "Format",
+      value: TOURNAMENT_FORMAT_LABEL[tournament.format],
+    },
+    {
+      label: "Picks per team",
+      value: String(tournament.picksPerTeam),
+    },
+    ...(tournament.playerEntryFeeMinorUnits !== null
+      ? [
+          {
+            label: "Entry fee",
+            value: formatMinorUnitsForDisplay(
+              tournament.playerEntryFeeMinorUnits,
+              tournament.playerEntryFeeCurrencyCode,
+            ),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -50,64 +92,74 @@ export default async function TournamentHubPage({ params }: PageProps) {
         />
       ) : null}
 
-      <header className="space-y-2">
-        <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
-          Choose a screen
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Format: <span className="font-medium text-foreground">{TOURNAMENT_FORMAT_LABEL[tournament.format]}</span>
-        </p>
-        <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
-          {isCommissioner ? (
-            <>
-              Set up rosters before go-live day. Drive the auction from{" "}
-              <strong className="font-semibold text-foreground">Run the auction</strong>; put{" "}
-              <strong className="font-semibold text-foreground">Live roster board</strong> up for
-              the room.
-            </>
-          ) : (
-            <>
-              You can browse setup pages now. Franchise owners nominate from{" "}
-              <strong className="font-semibold text-foreground">Run the auction</strong> flow, and
-              can check confirmed picks in{" "}
-              <strong className="font-semibold text-foreground">My Team</strong> when they are
-              signed in — the commissioner works from Manage auction instead.
-            </>
-          )}
-        </p>
-      </header>
+      <section className="rounded-xl border border-border/80 bg-card/35 p-4 backdrop-blur-md sm:p-6">
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {tournamentSummaryItems.map((item) => (
+              <Badge key={item.label} variant="secondary" className="px-3 py-1 text-xs font-medium">
+                {item.label}: {item.value}
+              </Badge>
+            ))}
+          </div>
+          {tournament.description ? (
+            <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              {tournament.description}
+            </p>
+          ) : null}
+          <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
+            {isCommissioner ? (
+              <>
+                Set up rosters before go-live day. Drive the auction from{" "}
+                <strong className="font-semibold text-foreground">Run the auction</strong>; put{" "}
+                <strong className="font-semibold text-foreground">Live roster board</strong> up for
+                the room.
+              </>
+            ) : (
+              <>
+                You can browse setup pages now. Franchise owners nominate from{" "}
+                <strong className="font-semibold text-foreground">Run the auction</strong> flow, and
+                can check confirmed picks in{" "}
+                <strong className="font-semibold text-foreground">My Team</strong> when they are
+                signed in — the commissioner works from Manage auction instead.
+              </>
+            )}
+          </p>
+        </div>
+      </section>
 
-      <ul className="grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
-        {hubCards.map((item) => (
-          <li key={item.title}>
-            <Card
-              className={cn(
-                "h-full border-border/80 transition hover:border-primary/40",
-                item.primary && "border-primary/30 bg-primary/5",
-              )}
-            >
-              <CardHeader className="space-y-3 pb-4">
-                <CardTitle className="text-base sm:text-lg">{item.title}</CardTitle>
-                <CardDescription className="text-sm leading-relaxed">
-                  {item.description}
-                </CardDescription>
-                <Link
-                  href={item.href(slug)}
-                  className={cn(
-                    buttonVariants({
-                      variant: item.primary ? "default" : "outline",
-                      size: "sm",
-                    }),
-                    "w-full sm:w-auto",
-                  )}
-                >
-                  Open
-                </Link>
-              </CardHeader>
-            </Card>
-          </li>
+      <section className="grid gap-3 sm:grid-cols-3">
+        {[
+          {
+            label: "Players",
+            value: playersCount,
+            description: "Total roster pool in this tournament",
+          },
+          {
+            label: "Teams",
+            value: teamsCount,
+            description: "Franchises currently configured",
+          },
+          {
+            label: "Roster groups",
+            value: rosterGroups.length,
+            description: "Active roster buckets used across the auction",
+          },
+        ].map((item) => (
+          <Card key={item.label} className="border-border/80 bg-card/40">
+            <CardHeader className="gap-2">
+              <CardDescription className="text-xs uppercase tracking-[0.16em]">
+                {item.label}
+              </CardDescription>
+              <CardTitle className="text-3xl font-semibold tracking-tight">
+                {item.value}
+              </CardTitle>
+              <CardDescription>{item.description}</CardDescription>
+            </CardHeader>
+          </Card>
         ))}
-      </ul>
+      </section>
+
+      <PlayersCategoryDashboard rows={dashboardRows} totalPlayers={playersCount} />
     </div>
   );
 }

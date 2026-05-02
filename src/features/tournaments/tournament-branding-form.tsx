@@ -102,11 +102,17 @@ export function TournamentBrandingForm({
             {error}
           </p>
         ) : null}
-        <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={pending} className="min-h-11">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Button type="submit" disabled={pending} className="min-h-11 w-full">
             {pending ? "Saving…" : "Save look"}
           </Button>
-          <Link href={ROUTES.teams(tournamentSlug)} className={cn(buttonVariants({ variant: "outline" }))}>
+          <Link
+            href={ROUTES.teams(tournamentSlug)}
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "min-h-11 w-full",
+            )}
+          >
             Edit teams
           </Link>
         </div>

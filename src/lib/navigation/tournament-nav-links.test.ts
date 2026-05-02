@@ -27,7 +27,7 @@ describe("tournamentChromeNavGroups", () => {
     expect(groups[2]?.links.map((link) => link.label)).toEqual([
       "Fixtures",
       "Run tournament",
-      "Leaderboard",
+      "Knockout board",
     ]);
   });
 

@@ -11,6 +11,7 @@ import {
 } from "@/services/league-account-service";
 import {
   assertTournamentOwnership,
+  bulkUpdatePlayers,
   createPlayer,
   createTeam,
   createTournament,
@@ -32,6 +33,7 @@ import {
   revokeFranchiseLoginFromPlayerSchema,
 } from "@/validations/league-account";
 import {
+  bulkUpdatePlayersSchema,
   createPlayerSchema,
   createTeamSchema,
   createTournamentSchema,
@@ -233,6 +235,28 @@ export async function updatePlayerAction(
     revalidatePath(`/tournament/${slug}/teams`);
     revalidatePath(`/tournament/${slug}/rules`);
     revalidatePath(`/tournament/${slug}/categories`);
+    return { ok: true, slug };
+  } catch (e) {
+    if (e instanceof Error && e.message === "Unauthorized") {
+      return { ok: false, error: "Unauthorized" };
+    }
+    return handle(e);
+  }
+}
+
+export async function bulkUpdatePlayersAction(
+  input: unknown,
+): Promise<TournamentActionResult> {
+  try {
+    const parsed = bulkUpdatePlayersSchema.safeParse(input);
+    if (!parsed.success) return { ok: false, error: "Invalid bulk player update." };
+    const user = await requireSessionUser();
+    await bulkUpdatePlayers(user.id, parsed.data);
+    const slug = parsed.data.tournamentSlug;
+    revalidatePath(`/tournament/${slug}`, "layout");
+    revalidatePath(`/tournament/${slug}/players`);
+    revalidatePath(`/tournament/${slug}/categories`);
+    revalidatePath(`/tournament/${slug}/rules`);
     return { ok: true, slug };
   } catch (e) {
     if (e instanceof Error && e.message === "Unauthorized") {

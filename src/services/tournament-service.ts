@@ -34,6 +34,7 @@ import { TournamentServiceError } from "@/services/tournament-errors";
 import { tournamentSlugFromName } from "@/utils/tournament-slug";
 
 import type {
+  BulkUpdatePlayersInput,
   CreatePlayerInput,
   CreateTeamInput,
   CreateTournamentInput,
@@ -577,6 +578,7 @@ export async function createPlayer(userId: string, input: CreatePlayerInput) {
       rosterCategoryId: input.rosterCategoryId,
       gender: input.gender,
       notes: input.notes || null,
+      hasPaidEntryFee: input.hasPaidEntryFee ?? false,
     },
   });
 }
@@ -612,6 +614,7 @@ export async function updatePlayer(userId: string, input: UpdatePlayerInput) {
       rosterCategoryId: input.rosterCategoryId,
       gender: input.gender,
       notes: input.notes?.trim() ? input.notes.trim() : null,
+      hasPaidEntryFee: input.hasPaidEntryFee ?? false,
     },
   });
 
@@ -626,6 +629,58 @@ export async function updatePlayer(userId: string, input: UpdatePlayerInput) {
   }
 
   if (existing.rosterCategoryId !== input.rosterCategoryId) {
+    await reconcileSquadRulesForTournament(tournamentId);
+  }
+}
+
+export async function bulkUpdatePlayers(
+  userId: string,
+  input: BulkUpdatePlayersInput,
+) {
+  const tournamentId = await assertTournamentOwnership(
+    input.tournamentSlug,
+    userId,
+  );
+
+  if (input.rosterCategoryId) {
+    await assertActiveRosterCategoryForPlayer(tournamentId, input.rosterCategoryId);
+  }
+
+  const existingPlayers = await prisma.player.findMany({
+    where: {
+      tournamentId,
+      deletedAt: null,
+      id: { in: input.playerIds },
+    },
+    select: { id: true },
+  });
+
+  if (existingPlayers.length !== input.playerIds.length) {
+    throw new TournamentServiceError("One or more selected players no longer exist.");
+  }
+
+  const updateData: {
+    rosterCategoryId?: string;
+    hasPaidEntryFee?: boolean;
+  } = {};
+
+  if (input.rosterCategoryId) {
+    updateData.rosterCategoryId = input.rosterCategoryId;
+  }
+  if (input.hasPaidEntryFee !== undefined) {
+    updateData.hasPaidEntryFee = input.hasPaidEntryFee;
+  }
+
+  await prisma.player.updateMany({
+    where: {
+      tournamentId,
+      deletedAt: null,
+      id: { in: input.playerIds },
+    },
+    data: updateData,
+  });
+
+  if (input.rosterCategoryId) {
     await reconcileSquadRulesForTournament(tournamentId);
   }
 }

@@ -60,6 +60,7 @@ import {
 import { RosterCategoryPill } from "@/features/roster/roster-category-pill";
 import { DraftPhase } from "@/generated/prisma/enums";
 import { useDraftLiveSync } from "@/hooks/use-draft-live-sync";
+import { getDraftProgressDisplay } from "@/lib/draft/draft-progress";
 import { cn } from "@/lib/utils";
 import type { DraftSnapshotDto } from "@/types/draft";
 
@@ -184,6 +185,7 @@ export function AdminControlRoomClient({
   const s = slug;
   const live = liveSnapshot.draftPhase === DraftPhase.LIVE;
   const paused = liveSnapshot.draftPhase === DraftPhase.PAUSED;
+  const draftProgress = getDraftProgressDisplay(liveSnapshot);
   const setupOrReady =
     liveSnapshot.draftPhase === DraftPhase.SETUP ||
     liveSnapshot.draftPhase === DraftPhase.READY;
@@ -379,12 +381,7 @@ export function AdminControlRoomClient({
                   {phaseLabel}
                 </Badge>
                 <Badge variant="secondary" className="font-normal">
-                  Pick{" "}
-                  {Math.min(
-                    liveSnapshot.currentSlotIndex + 1,
-                    Math.max(liveSnapshot.draftSlotsTotal, 1),
-                  )}
-                  {" / "}
+                  Pick {draftProgress.displayPickCount} {" / "}
                   {liveSnapshot.draftSlotsTotal || "—"}
                 </Badge>
                 {liveSnapshot.overrideValidation ? (

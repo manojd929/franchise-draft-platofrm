@@ -117,6 +117,9 @@ export default async function RulesPage({ params }: PageProps) {
       },
     ];
   });
+  const formKey = initialRules
+    .map((rule) => `${rule.rosterCategoryId}:${rule.maxCount}`)
+    .join("|");
 
   return (
     <div className="space-y-6 sm:space-y-10">
@@ -139,6 +142,7 @@ export default async function RulesPage({ params }: PageProps) {
 
       {isCommissioner ? (
         <SquadRulesForm
+          key={formKey}
           tournamentSlug={slug}
           rosterSummary={{
             teamCount,

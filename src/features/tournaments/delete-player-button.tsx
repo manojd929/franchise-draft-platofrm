@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Trash2Icon } from "lucide-react";
 
 import {
   AlertDialog,
@@ -24,6 +25,7 @@ interface DeletePlayerButtonProps {
   disabled?: boolean;
   disabledReason?: string;
   className?: string;
+  compact?: boolean;
 }
 
 export function DeletePlayerButton({
@@ -33,6 +35,7 @@ export function DeletePlayerButton({
   disabled = false,
   disabledReason,
   className,
+  compact = false,
 }: DeletePlayerButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -61,8 +64,12 @@ export function DeletePlayerButton({
         type="button"
         variant="outline"
         title={disabled ? disabledReason : undefined}
+        aria-label={compact ? `Delete ${playerName}` : undefined}
+        size={compact ? "icon-sm" : undefined}
         className={cn(
-          "min-h-11 w-full touch-manipulation border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive sm:w-auto sm:min-w-[7rem]",
+          compact
+            ? "border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            : "min-h-11 w-full touch-manipulation border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive sm:w-auto sm:min-w-[7rem]",
           disabled && "pointer-events-none opacity-50",
           className,
         )}
@@ -73,7 +80,7 @@ export function DeletePlayerButton({
           setOpen(true);
         }}
       >
-        Delete
+        {compact ? <Trash2Icon className="size-4" aria-hidden /> : "Delete"}
       </Button>
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent className="sm:max-w-md" size="default">

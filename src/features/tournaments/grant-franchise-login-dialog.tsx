@@ -24,6 +24,7 @@ interface GrantFranchiseLoginDialogProps {
   playerName: string;
   invitingSupported: boolean;
   canInviteOwners: boolean;
+  className?: string;
 }
 
 export function GrantFranchiseLoginDialog({
@@ -32,6 +33,7 @@ export function GrantFranchiseLoginDialog({
   playerName,
   invitingSupported,
   canInviteOwners,
+  className,
 }: GrantFranchiseLoginDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -79,7 +81,7 @@ export function GrantFranchiseLoginDialog({
         type="button"
         variant="outline"
         size="sm"
-        className="min-h-11 touch-manipulation sm:min-h-8"
+        className={className ?? "min-h-11 touch-manipulation sm:min-h-8"}
         disabled={locked}
         title={locked ? lockedTitle : undefined}
         onClick={() => {

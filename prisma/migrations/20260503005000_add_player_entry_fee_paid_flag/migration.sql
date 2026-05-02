@@ -1,0 +1,2 @@
+ALTER TABLE "Player"
+ADD COLUMN "hasPaidEntryFee" BOOLEAN NOT NULL DEFAULT false;

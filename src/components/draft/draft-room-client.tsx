@@ -25,6 +25,7 @@ import { requestPickAction } from "@/features/draft/actions";
 import { RosterCategoryPill } from "@/features/roster/roster-category-pill";
 import { DraftPhase, type Gender } from "@/generated/prisma/enums";
 import { useDraftLiveSync } from "@/hooks/use-draft-live-sync";
+import { getDraftProgressDisplay } from "@/lib/draft/draft-progress";
 import { cn } from "@/lib/utils";
 import { useDraftBoardUiStore } from "@/store/draft-board-store";
 import type { DraftSnapshotDto } from "@/types/draft";
@@ -191,7 +192,7 @@ export function DraftRoomClient({
   const liveSpotlightLocksRound = draftLive && spotlightId !== null;
 
   const filteredPlayers = useMemo(() => {
-    let list = effectiveSnapshot.players;
+    let list = effectiveSnapshot.players.filter((player) => !player.runsFranchiseLogin);
 
     if (applyBoardSpotlight && spotlightId) {
       list = list.filter((p) => p.rosterCategoryId === spotlightId);
@@ -276,6 +277,7 @@ export function DraftRoomClient({
       : sortMode === "name_asc"
         ? "Name A → Z"
         : "Group";
+  const draftProgress = getDraftProgressDisplay(effectiveSnapshot);
 
   const sidebarNowCard = (
     <div className="rounded-xl border border-border/80 bg-card/40 p-3 backdrop-blur-md sm:p-4">
@@ -286,12 +288,7 @@ export function DraftRoomClient({
           {DRAFT_PHASE_LABEL[effectiveSnapshot.draftPhase]}
         </Badge>
         <Badge variant="secondary">
-          Pick{" "}
-          {Math.min(
-            effectiveSnapshot.currentSlotIndex + 1,
-            Math.max(effectiveSnapshot.draftSlotsTotal, 1),
-          )}{" "}
-          / {effectiveSnapshot.draftSlotsTotal || "-"}
+          Pick {draftProgress.displayPickCount} / {effectiveSnapshot.draftSlotsTotal || "-"}
         </Badge>
       </div>
       <Separator className="my-3 sm:my-4" />

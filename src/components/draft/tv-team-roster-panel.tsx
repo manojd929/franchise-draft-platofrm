@@ -60,6 +60,8 @@ export function TvTeamRosterPanel({
   isOnClock,
 }: TvTeamRosterPanelProps) {
   const totalOnRoster = confirmedPlayers.length + pendingPlayers.length;
+  const ownerPlayer =
+    confirmedPlayers.find((player) => player.runsFranchiseLogin) ?? null;
   const groups = groupPlayersByCategory(confirmedPlayers, rosterCategoryRank);
 
   return (
@@ -127,6 +129,14 @@ export function TvTeamRosterPanel({
               </>
             ) : null}
           </p>
+          {ownerPlayer ? (
+            <p className="mt-1 text-[12px] text-muted-foreground sm:text-[13px] dark:text-white/65">
+              Owner ·{" "}
+              <span className="font-semibold text-foreground dark:text-white">
+                {ownerPlayer.name}
+              </span>
+            </p>
+          ) : null}
         </div>
       </header>
 

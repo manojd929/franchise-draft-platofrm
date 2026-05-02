@@ -38,6 +38,11 @@ export function SquadRulesForm({
 
   const canonicalOrder = rosterCategorySortOrder(initialRules);
   const ordered = sortSquadRulesByRosterCategoryOrder(initialRules, canonicalOrder);
+  const [capValues, setCapValues] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      ordered.map((rule) => [rule.rosterCategoryId, String(rule.maxCount)]),
+    ),
+  );
 
   const { teamCount, playersPerCategory, categoryFitRows } = rosterSummary;
 
@@ -48,12 +53,12 @@ export function SquadRulesForm({
   return (
     <form
       className="space-y-6 rounded-xl border border-border/70 bg-card/40 p-6 backdrop-blur-md"
-      action={(formData) => {
+      action={() => {
         startTransition(async () => {
           setError(null);
           const rules = ordered.map((rule) => ({
             rosterCategoryId: rule.rosterCategoryId,
-            maxCount: Number(formData.get(`cap-${rule.rosterCategoryId}`) ?? rule.maxCount),
+            maxCount: Number(capValues[rule.rosterCategoryId] ?? rule.maxCount),
           }));
           const result = await saveSquadRulesAction({
             tournamentSlug,
@@ -101,7 +106,13 @@ export function SquadRulesForm({
                 type="number"
                 min={0}
                 max={50}
-                defaultValue={rule.maxCount}
+                value={capValues[rule.rosterCategoryId] ?? ""}
+                onChange={(event) => {
+                  setCapValues((current) => ({
+                    ...current,
+                    [rule.rosterCategoryId]: event.target.value,
+                  }));
+                }}
               />
               <p className="text-xs leading-relaxed text-muted-foreground">
                 {teamCount <= 0 ? (

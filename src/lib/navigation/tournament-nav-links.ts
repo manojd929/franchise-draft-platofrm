@@ -33,7 +33,7 @@ export function tournamentChromeNavGroups(
     ? [{ href: ROUTES.fixtures(slug), label: "Fixtures" as const }]
     : [];
   const leaderboardLink = options?.showFixtures
-    ? [{ href: ROUTES.leaderboard(slug), label: "Leaderboard" as const }]
+    ? [{ href: ROUTES.leaderboard(slug), label: "Knockout board" as const }]
     : [];
   const commissionerGroups: TournamentChromeNavGroup[] = [
     {
@@ -195,8 +195,8 @@ export function tournamentHubCardsForViewer(options: {
     ...(options.showFixtures
       ? [{
           href: ROUTES.leaderboard,
-          title: "Leaderboard",
-          description: "See standings, points, wins, and score differential in one table.",
+          title: "Knockout board",
+          description: "See standings and all recorded match results in one read-only board.",
         } satisfies TournamentHubCard]
       : []),
     ...(options.showFixtures

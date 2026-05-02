@@ -5,12 +5,13 @@ import { useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { TvTeamRosterPanel } from "@/components/draft/tv-team-roster-panel";
+import { DRAFT_PHASE_LABEL } from "@/constants/draft-phase-labels";
 import { RosterCategoryPill } from "@/features/roster/roster-category-pill";
 import { DraftPhase } from "@/generated/prisma/enums";
 import { useDraftLiveSync } from "@/hooks/use-draft-live-sync";
+import { getDraftProgressDisplay } from "@/lib/draft/draft-progress";
 import { cn } from "@/lib/utils";
 import type { DraftPlayerDto, DraftSnapshotDto } from "@/types/draft";
-import { DRAFT_PHASE_LABEL } from "@/constants/draft-phase-labels";
 
 interface TvDisplayClientProps {
   slug: string;
@@ -72,21 +73,10 @@ export function TvDisplayClient({ slug, initialSnapshot }: TvDisplayClientProps)
   const activeTeam = currentTurnTeamId ? teamsById[currentTurnTeamId] : null;
   const live = snapshot.draftPhase === DraftPhase.LIVE;
   const completed = snapshot.draftPhase === DraftPhase.COMPLETED;
+  const draftProgress = getDraftProgressDisplay(snapshot);
 
   const progressDenominator =
     snapshot.draftSlotsTotal > 0 ? snapshot.draftSlotsTotal : 1;
-  const progressPercent =
-    snapshot.draftSlotsTotal > 0
-      ? Math.min(
-          100,
-          Math.round((snapshot.picksCount / snapshot.draftSlotsTotal) * 100),
-        )
-      : 0;
-
-  const currentPickOrdinal = Math.min(
-    snapshot.currentSlotIndex + 1,
-    Math.max(snapshot.draftSlotsTotal, 1),
-  );
 
   return (
     <div className="relative flex min-h-[100dvh] flex-col overflow-x-hidden bg-background text-foreground dark:bg-[#070b14] dark:text-white">
@@ -158,17 +148,17 @@ export function TvDisplayClient({ slug, initialSnapshot }: TvDisplayClientProps)
                     Draft progress
                   </p>
                   <p className="mt-1 font-mono text-base font-semibold tabular-nums text-foreground sm:text-lg dark:text-white">
-                    Pick {snapshot.picksCount}/{progressDenominator}
+                    Pick {draftProgress.displayPickCount}/{progressDenominator}
                   </p>
                   <p className="text-[11px] text-muted-foreground tabular-nums sm:text-xs dark:text-white/45">
-                    Slot {currentPickOrdinal} of {snapshot.draftSlotsTotal || "—"}
+                    Slot {draftProgress.currentPickOrdinal} of {snapshot.draftSlotsTotal || "—"}
                   </p>
                 </div>
               </div>
               <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-muted dark:bg-white/10">
                 <motion.div
                   className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-500 dark:from-sky-400 dark:to-emerald-400"
-                  animate={{ width: `${progressPercent}%` }}
+                  animate={{ width: `${draftProgress.progressPercent}%` }}
                   transition={{ type: "spring", stiffness: 120, damping: 22 }}
                 />
               </div>

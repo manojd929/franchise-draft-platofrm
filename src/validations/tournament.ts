@@ -93,6 +93,7 @@ export const createPlayerSchema = z.object({
   rosterCategoryId: z.string().uuid(),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]),
   notes: z.string().max(500).optional(),
+  hasPaidEntryFee: z.boolean().optional(),
 });
 
 export type CreatePlayerInput = z.infer<typeof createPlayerSchema>;
@@ -105,9 +106,25 @@ export const updatePlayerSchema = z.object({
   rosterCategoryId: z.string().uuid(),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]),
   notes: z.string().max(500).optional(),
+  hasPaidEntryFee: z.boolean().optional(),
 });
 
 export type UpdatePlayerInput = z.infer<typeof updatePlayerSchema>;
+
+export const bulkUpdatePlayersSchema = z
+  .object({
+    tournamentSlug: z.string().min(1),
+    playerIds: z.array(z.string().uuid()).min(1),
+    rosterCategoryId: z.string().uuid().optional(),
+    hasPaidEntryFee: z.boolean().optional(),
+  })
+  .refine(
+    (data) =>
+      data.rosterCategoryId !== undefined || data.hasPaidEntryFee !== undefined,
+    { message: "Choose at least one bulk change.", path: ["playerIds"] },
+  );
+
+export type BulkUpdatePlayersInput = z.infer<typeof bulkUpdatePlayersSchema>;
 
 export const deleteTournamentSchema = z.object({
   tournamentSlug: z.string().min(1),

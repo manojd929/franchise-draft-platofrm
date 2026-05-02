@@ -107,13 +107,16 @@ async function loadDraftTournamentBySlug(slug: string) {
 }
 
 function mapSnapshot(t: NonNullable<Awaited<ReturnType<typeof loadDraftTournamentBySlug>>>): DraftSnapshotDto {
-  const draftBoardPlayers = t.players.filter(
-    (player) => player.linkedOwnerUserId === null,
-  );
   const playerAssignments = new Map<
     string,
     { teamId: string; confirmed: boolean }
   >();
+  const ownerTeamIdsByUserId = new Map<string, string>();
+  for (const team of t.teams) {
+    if (team.ownerUserId) {
+      ownerTeamIdsByUserId.set(team.ownerUserId, team.id);
+    }
+  }
   for (const pick of t.picks) {
     playerAssignments.set(pick.playerId, {
       teamId: pick.teamId,
@@ -176,8 +179,11 @@ function mapSnapshot(t: NonNullable<Awaited<ReturnType<typeof loadDraftTournamen
       colorHex: team.colorHex,
       ownerUserId: team.ownerUserId,
     })),
-    players: draftBoardPlayers.map((player) => {
+    players: t.players.map((player) => {
       const assignment = playerAssignments.get(player.id);
+      const ownerTeamId = player.linkedOwnerUserId
+        ? ownerTeamIdsByUserId.get(player.linkedOwnerUserId) ?? null
+        : null;
       return {
         id: player.id,
         name: player.name,
@@ -189,9 +195,9 @@ function mapSnapshot(t: NonNullable<Awaited<ReturnType<typeof loadDraftTournamen
         notes: player.notes,
         isUnavailable: player.isUnavailable,
         isLocked: player.isLocked,
-        runsFranchiseLogin: false,
-        assignedTeamId: assignment?.teamId ?? null,
-        hasConfirmedPick: assignment?.confirmed ?? false,
+        runsFranchiseLogin: player.linkedOwnerUserId !== null,
+        assignedTeamId: assignment?.teamId ?? ownerTeamId,
+        hasConfirmedPick: assignment?.confirmed ?? Boolean(ownerTeamId),
       };
     }),
     draftSlots: t.draftSlots.map((slot) => ({
@@ -270,21 +276,46 @@ async function countTeamCategoryPicks(
   tournamentId: string,
   teamId: string,
 ): Promise<Record<string, number>> {
-  const picks = await prisma.pick.findMany({
-    where: {
-      tournamentId,
-      teamId,
-      status: PickStatus.CONFIRMED,
-    },
-    select: {
-      player: { select: { rosterCategoryId: true } },
-    },
-  });
+  const [picks, team] = await Promise.all([
+    prisma.pick.findMany({
+      where: {
+        tournamentId,
+        teamId,
+        status: PickStatus.CONFIRMED,
+      },
+      select: {
+        player: { select: { rosterCategoryId: true } },
+      },
+    }),
+    prisma.team.findFirst({
+      where: {
+        id: teamId,
+        tournamentId,
+        deletedAt: null,
+      },
+      select: { ownerUserId: true },
+    }),
+  ]);
   const counts: Record<string, number> = {};
   for (const pick of picks) {
     const cid = pick.player.rosterCategoryId;
     counts[cid] = (counts[cid] ?? 0) + 1;
   }
+
+  if (team?.ownerUserId) {
+    const ownerRows = await prisma.player.findMany({
+      where: {
+        tournamentId,
+        deletedAt: null,
+        linkedOwnerUserId: team.ownerUserId,
+      },
+      select: { rosterCategoryId: true },
+    });
+    for (const ownerRow of ownerRows) {
+      counts[ownerRow.rosterCategoryId] = (counts[ownerRow.rosterCategoryId] ?? 0) + 1;
+    }
+  }
+
   return counts;
 }
 

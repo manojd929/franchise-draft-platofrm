@@ -9,12 +9,15 @@ export async function getTournamentBySlug(slug: string) {
       id: true,
       name: true,
       slug: true,
+      description: true,
       createdById: true,
       picksPerTeam: true,
       logoUrl: true,
       colorHex: true,
       format: true,
       draftPhase: true,
+      playerEntryFeeMinorUnits: true,
+      playerEntryFeeCurrencyCode: true,
     },
   });
 }

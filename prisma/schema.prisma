@@ -202,6 +202,7 @@ model Player {
   rosterCategoryId String       @db.Uuid
   gender           Gender
   notes            String?
+  hasPaidEntryFee  Boolean      @default(false)
   isUnavailable    Boolean      @default(false)
   isLocked         Boolean      @default(false)
   isEliminated     Boolean      @default(false)

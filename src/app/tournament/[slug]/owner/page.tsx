@@ -108,13 +108,13 @@ export default async function OwnerViewPage({ params }: PageProps) {
       <header>
         <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">My Team</h2>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-          Confirmed picks only for {team.shortName ?? team.name}.
+          Confirmed roster for {team.shortName ?? team.name}, including the assigned owner row.
         </p>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {rosterCards.length === 0 ? (
-          <p className="text-muted-foreground">No confirmed picks yet.</p>
+          <p className="text-muted-foreground">No confirmed roster slots yet.</p>
         ) : null}
         {rosterCards.map((item) => (
           <Card key={item.id} className="border-border/70 bg-card/50 backdrop-blur-sm">
