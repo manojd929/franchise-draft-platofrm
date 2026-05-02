@@ -278,6 +278,8 @@ export function DraftRoomClient({
         ? "Name A → Z"
         : "Group";
   const draftProgress = getDraftProgressDisplay(effectiveSnapshot);
+  const hideCompletedOwnerClockSection =
+    franchiseOwnerPhoneMode && effectiveSnapshot.draftPhase === DraftPhase.COMPLETED;
 
   const sidebarNowCard = (
     <div className="rounded-xl border border-border/80 bg-card/40 p-3 backdrop-blur-md sm:p-4">
@@ -293,17 +295,21 @@ export function DraftRoomClient({
       </div>
       <Separator className="my-3 sm:my-4" />
       <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">Who picks now</p>
-        <div
-          className={cn(
-            "rounded-lg border px-3 py-3 text-sm font-semibold transition-all",
-            draftLive && currentTeam
-              ? "border-primary/60 bg-primary/10 shadow-[0_0_30px_-14px_rgba(56,189,248,0.9)]"
-              : "border-border bg-muted/30",
-          )}
-        >
-          {currentTeam?.name ?? "-"}
-        </div>
+        {!hideCompletedOwnerClockSection ? (
+          <>
+            <p className="text-xs font-medium text-muted-foreground">Who picks now</p>
+            <div
+              className={cn(
+                "rounded-lg border px-3 py-3 text-sm font-semibold transition-all",
+                draftLive && currentTeam
+                  ? "border-primary/60 bg-primary/10 shadow-[0_0_30px_-14px_rgba(56,189,248,0.9)]"
+                  : "border-border bg-muted/30",
+              )}
+            >
+              {currentTeam?.name ?? "-"}
+            </div>
+          </>
+        ) : null}
         {draftLive &&
         applyBoardSpotlight &&
         spotlightId &&
