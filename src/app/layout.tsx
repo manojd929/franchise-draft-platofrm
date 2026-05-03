@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: `%s · ${APP_NAME}`,
   },
   description:
-        "Simple live auction for sports clubs: teams, player photos, turn order, and a live hall roster board.",
+    "Simple live auction for sports clubs: teams, player photos, live rounds, and a shared roster board.",
 };
 
 export const viewport: Viewport = {

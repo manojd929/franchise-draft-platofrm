@@ -1,5 +1,6 @@
 /**
- * Builds a flat snake-draft sequence of team IDs with length `picksPerTeam * teamIds.length`.
+ * Builds a flat draft sequence of team IDs with length `picksPerTeam * teamIds.length`.
+ * Each round is shuffled independently.
  */
 export function buildSnakeDraftTeamSequence(
   teamIds: string[],
@@ -8,9 +9,7 @@ export function buildSnakeDraftTeamSequence(
   if (teamIds.length === 0 || picksPerTeam <= 0) return [];
   const slots: string[] = [];
   for (let round = 0; round < picksPerTeam; round += 1) {
-    const forward = round % 2 === 0;
-    const order = forward ? teamIds : [...teamIds].reverse();
-    slots.push(...order);
+    slots.push(...shuffleTeamIds(teamIds));
   }
   return slots;
 }

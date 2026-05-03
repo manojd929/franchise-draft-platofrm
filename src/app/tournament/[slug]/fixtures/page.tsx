@@ -1,14 +1,16 @@
 import { notFound, redirect } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { generateRoundRobinTiesAction } from "@/features/fixtures/actions";
+import { FixturesAdminPanel } from "@/features/fixtures/fixtures-admin-panel";
 import {
   fixtureStatusLabel,
   getFixtureSideLabel,
 } from "@/features/tournament-run/match-presentation";
 import { getSessionUser } from "@/lib/auth/session";
-import { getFixturesSummary } from "@/services/fixtures-service";
+import {
+  getFixturesAdminOptions,
+  getFixturesSummary,
+} from "@/services/fixtures-service";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -36,52 +38,47 @@ export default async function FixturesPage({ params }: PageProps) {
 
   const isAdmin = tournament.createdById === user.id;
   const untiedMatches = matches.filter((match) => match.tieId === null);
+  const adminOptions = isAdmin ? await getFixturesAdminOptions(slug) : null;
 
   return (
     <div className="space-y-8">
       <header className="space-y-2">
         <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Fixtures</h2>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Team ties and scheduled doubles matches. When player pairings are not assigned yet, fixtures stay readable by showing the franchise pairing placeholder instead of broken player names.
+          Team ties and scheduled matches live here. Admins can now auto-generate the
+          schedule or build it manually, while viewers always see the same fixture board.
         </p>
       </header>
 
-      {isAdmin ? (
-        <section className="rounded-2xl border border-border/70 bg-card/50 p-5 shadow-sm backdrop-blur-sm">
-          <form
-            action={async (formData) => {
-              "use server";
-              await generateRoundRobinTiesAction({
-                tournamentSlug: slug,
-                matchesPerTie: Number(formData.get("matchesPerTie") ?? 5),
-              });
-            }}
-            className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
-          >
-            <div className="space-y-1">
-              <h3 className="font-medium text-foreground">Generate team round robin</h3>
-              <p className="text-sm text-muted-foreground">
-                Rebuild every tie for this tournament and replace existing fixture rows.
-              </p>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-                Matches per tie
-                <input
-                  name="matchesPerTie"
-                  type="number"
-                  defaultValue={5}
-                  min={1}
-                  max={15}
-                  className="h-10 w-full rounded-xl border border-input bg-background px-3 text-foreground sm:w-28"
-                />
-              </label>
-              <Button type="submit" className="min-h-10 px-5">
-                Generate fixtures
-              </Button>
-            </div>
-          </form>
-        </section>
+      {isAdmin && adminOptions ? (
+        <FixturesAdminPanel
+          tournamentSlug={slug}
+          tournamentFormat={tournament.format}
+          teams={adminOptions.teams}
+          players={adminOptions.players}
+          doublesPlayersByTeam={adminOptions.doublesPlayersByTeam}
+          ties={ties.map((tie) => ({
+            id: tie.id,
+            roundNumber: tie.roundNumber,
+            categoryLabel: tie.categoryLabel,
+            teamOne: tie.teamOne,
+            teamTwo: tie.teamTwo,
+          }))}
+          matches={matches.map((match) => ({
+            id: match.id,
+            tieId: match.tieId,
+            matchType: match.matchType,
+            status: match.status,
+            sideOneScore: match.sideOneScore,
+            sideTwoScore: match.sideTwoScore,
+            participants: match.participants.map((participant) => ({
+              id: participant.id,
+              side: participant.side,
+              player: participant.player,
+              team: participant.team,
+            })),
+          }))}
+        />
       ) : null}
 
       <section className="space-y-4">

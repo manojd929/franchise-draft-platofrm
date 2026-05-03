@@ -23,7 +23,7 @@ export default async function LoginPage({
   }
 
   return (
-    <div className="relative min-h-[100dvh] bg-background text-foreground">
+    <div className="relative min-h-[100dvh] bg-background text-foreground dark:bg-neutral-950">
       <div
         className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-sky-500/[0.07] to-transparent dark:from-sky-500/[0.14]"
         aria-hidden
@@ -43,7 +43,7 @@ export default async function LoginPage({
           <LoginForm nextPath={nextPath} />
         </main>
 
-        <footer className="shrink-0 border-t border-border/40 px-0.5 pt-5 text-center text-sm leading-snug text-muted-foreground md:border-0 md:pt-6 md:leading-relaxed">
+        <footer className="shrink-0 border-t border-border/40 px-0.5 pt-5 text-center text-sm leading-snug text-foreground/72 md:border-0 md:pt-6 md:leading-relaxed dark:text-foreground/78">
           First time at auction time? Ask your organizer for this league&apos;s sign-in link (it opens
           this page, then sends you to the right screen after you enter email and password). Franchise
           owners usually bookmark{" "}

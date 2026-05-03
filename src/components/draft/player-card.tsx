@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { LoaderCircleIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -16,6 +17,7 @@ interface PlayerCardProps {
   emphasize: boolean;
   onNominate?: () => void;
   nominateDisabled?: boolean;
+  nominateLoading?: boolean;
   /** When true, never render nominate control (defense-in-depth for franchise-owner phone UI). */
   hideNominateControl?: boolean;
   /** High-density tiles for commissioner boards with many nominees. */
@@ -33,6 +35,7 @@ export function PlayerCard({
   emphasize,
   onNominate,
   nominateDisabled,
+  nominateLoading = false,
   hideNominateControl,
   compact = false,
   presentationHighlight = false,
@@ -203,14 +206,22 @@ export function PlayerCard({
           {onNominate && !picked && !hideNominateControl ? (
             <button
               type="button"
-              disabled={nominateDisabled}
+              disabled={nominateDisabled || nominateLoading}
               onClick={onNominate}
+              aria-busy={nominateLoading}
               className={cn(
-                "mt-auto cursor-pointer rounded-lg bg-primary text-center font-semibold text-primary-foreground transition hover:bg-primary/90 active:translate-y-px active:scale-[0.985] active:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-40",
+                "mt-auto inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary text-center font-semibold text-primary-foreground transition hover:bg-primary/90 active:translate-y-px active:scale-[0.985] active:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-40",
                 compact ? "min-h-9 px-2 py-2 text-xs sm:text-[13px]" : "min-h-12 px-4 py-3 text-base sm:min-h-14 sm:text-lg",
               )}
             >
-              Pick this player
+              {nominateLoading ? (
+                <>
+                  <LoaderCircleIcon className="size-4 animate-spin sm:size-5" aria-hidden />
+                  Sending pick...
+                </>
+              ) : (
+                "Pick this player"
+              )}
             </button>
           ) : null}
         </div>

@@ -1,6 +1,7 @@
 import { TournamentShellHeader } from "@/components/navigation/tournament-shell-header";
 import { notFound } from "next/navigation";
 
+import { TournamentThemeShell } from "@/features/tournament-shell/tournament-theme-shell";
 import { getTournamentBySlug } from "@/lib/data/tournament-access";
 import {
   tournamentChromeNavGroups,
@@ -28,7 +29,7 @@ export default async function TournamentLayout({
   const navGroups = tournamentChromeNavGroups(slug, chromeViewer, { showFixtures });
 
   return (
-    <div className="min-h-screen bg-background">
+    <TournamentThemeShell tournamentColorHex={tournament.colorHex}>
       <TournamentShellHeader
         slug={slug}
         tournamentName={tournament.name}
@@ -40,6 +41,6 @@ export default async function TournamentLayout({
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="py-6 sm:py-10">{children}</div>
       </div>
-    </div>
+    </TournamentThemeShell>
   );
 }

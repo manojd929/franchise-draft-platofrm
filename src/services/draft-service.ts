@@ -34,6 +34,31 @@ async function appendLog(params: {
   });
 }
 
+async function countOwnerOccupiedSlotsTx(
+  tx: Prisma.TransactionClient,
+  tournamentId: string,
+): Promise<number> {
+  const teams = await tx.team.findMany({
+    where: { tournamentId, deletedAt: null, ownerUserId: { not: null } },
+    select: { ownerUserId: true },
+  });
+  const ownerUserIds = teams
+    .map((team) => team.ownerUserId)
+    .filter((ownerUserId): ownerUserId is string => Boolean(ownerUserId));
+
+  if (ownerUserIds.length === 0) {
+    return 0;
+  }
+
+  return tx.player.count({
+    where: {
+      tournamentId,
+      deletedAt: null,
+      linkedOwnerUserId: { in: ownerUserIds },
+    },
+  });
+}
+
 export async function assertTournamentAdmin(
   tournamentId: string,
   userId: string,
@@ -155,6 +180,13 @@ function mapSnapshot(t: NonNullable<Awaited<ReturnType<typeof loadDraftTournamen
     t.activeAuctionRosterCategory.id === spotlightCategoryId
       ? t.activeAuctionRosterCategory
       : null;
+  const ownerOccupiedSlots = t.players.filter((player) => {
+    if (!player.linkedOwnerUserId) {
+      return false;
+    }
+    return ownerTeamIdsByUserId.has(player.linkedOwnerUserId);
+  }).length;
+  const confirmedPickCount = t.picks.filter((p) => p.status === PickStatus.CONFIRMED).length;
 
   return {
     tournamentId: t.id,
@@ -210,7 +242,7 @@ function mapSnapshot(t: NonNullable<Awaited<ReturnType<typeof loadDraftTournamen
       rosterCategoryColorHex: rule.rosterCategory.colorHex,
       maxCount: rule.maxCount,
     })),
-    picksCount: t.picks.filter((p) => p.status === PickStatus.CONFIRMED).length,
+    picksCount: confirmedPickCount + ownerOccupiedSlots,
     draftSlotsTotal: t.draftSlots.length,
     activity: [],
     lastConfirmedPick:
@@ -468,7 +500,7 @@ export async function randomizeDraftOrder(params: {
       data: {
         tournamentId: tournament.id,
         action: DraftLogAction.ORDER_RANDOMIZED,
-        message: "Draft order randomized (snake).",
+        message: "Draft order randomized round by round.",
         actorUserId: params.actorUserId,
       },
     });
@@ -869,6 +901,21 @@ export async function requestPick(params: {
     }
 
     if (
+      isOwner &&
+      tournament.pendingPickPlayerId !== null &&
+      tournament.pendingPickTeamId === currentTeamId
+    ) {
+      const samePendingRequest =
+        tournament.pendingIdempotencyKey === params.idempotencyKey &&
+        tournament.pendingPickPlayerId === params.playerId;
+      if (!samePendingRequest) {
+        throw new DraftServiceError(
+          "Your nomination is already waiting for admin review. Wait for confirmation or decline before picking another player.",
+        );
+      }
+    }
+
+    if (
       tournament.pendingIdempotencyKey === params.idempotencyKey &&
       tournament.pendingPickPlayerId === params.playerId &&
       tournament.pendingPickTeamId === currentTeamId
@@ -954,8 +1001,18 @@ export async function confirmPick(params: {
       },
     });
 
+    const [ownerOccupiedSlots, confirmedPicksAfterUpdate] = await Promise.all([
+      countOwnerOccupiedSlotsTx(tx, tournament.id),
+      tx.pick.count({
+        where: {
+          tournamentId: tournament.id,
+          status: PickStatus.CONFIRMED,
+        },
+      }),
+    ]);
+    const occupiedSlotsAfterUpdate = ownerOccupiedSlots + confirmedPicksAfterUpdate;
     const nextIndex = tournament.currentSlotIndex + 1;
-    const completed = nextIndex >= tournament.draftSlots.length;
+    const completed = occupiedSlotsAfterUpdate >= tournament.draftSlots.length;
 
     await tx.tournament.update({
       where: { id: tournament.id },
@@ -1134,10 +1191,20 @@ export async function assignManualPick(params: {
       },
     });
 
+    const [ownerOccupiedSlots, confirmedPicksAfterUpdate] = await Promise.all([
+      countOwnerOccupiedSlotsTx(tx, tournament.id),
+      tx.pick.count({
+        where: {
+          tournamentId: tournament.id,
+          status: PickStatus.CONFIRMED,
+        },
+      }),
+    ]);
+    const occupiedSlotsAfterUpdate = ownerOccupiedSlots + confirmedPicksAfterUpdate;
     const nextIndex = tournament.currentSlotIndex + 1;
     const completed =
       tournament.draftSlots.length > 0 &&
-      nextIndex >= tournament.draftSlots.length;
+      occupiedSlotsAfterUpdate >= tournament.draftSlots.length;
 
     await tx.tournament.update({
       where: { id: tournament.id },

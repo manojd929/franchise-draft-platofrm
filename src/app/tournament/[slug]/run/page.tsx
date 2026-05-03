@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import {
   togglePlayerEliminationAction,
   toggleTeamEliminationAction,
@@ -96,9 +97,13 @@ export default async function RunTournamentPage({ params }: PageProps) {
                     {row.eliminated ? "Currently eliminated" : "Currently active"}
                   </p>
                 </div>
-                <Button type="submit" size="sm" variant={row.eliminated ? "outline" : "destructive"}>
+                <PendingSubmitButton
+                  size="sm"
+                  variant={row.eliminated ? "outline" : "destructive"}
+                  pendingLabel={row.eliminated ? "Reinstating…" : "Eliminating…"}
+                >
                   {row.eliminated ? "Reinstate" : "Eliminate"}
-                </Button>
+                </PendingSubmitButton>
               </form>
             ))}
           </div>
@@ -198,9 +203,12 @@ export default async function RunTournamentPage({ params }: PageProps) {
                               defaultValue={match.sideTwoScore ?? ""}
                               placeholder={`${tie.teamTwo.name} score`}
                             />
-                            <Button type="submit" className="sm:col-span-2 min-h-10">
+                            <PendingSubmitButton
+                              className="sm:col-span-2 min-h-10"
+                              pendingLabel="Saving score…"
+                            >
                               Submit final score
-                            </Button>
+                            </PendingSubmitButton>
                           </form>
 
                           <div className="grid gap-2 sm:grid-cols-3">
@@ -214,9 +222,13 @@ export default async function RunTournamentPage({ params }: PageProps) {
                                 });
                               }}
                             >
-                              <Button type="submit" variant="outline" className="min-h-10 w-full">
+                              <PendingSubmitButton
+                                variant="outline"
+                                className="min-h-10 w-full"
+                                pendingLabel="Starting…"
+                              >
                                 Start
-                              </Button>
+                              </PendingSubmitButton>
                             </form>
                             <form
                               action={async () => {
@@ -228,9 +240,13 @@ export default async function RunTournamentPage({ params }: PageProps) {
                                 });
                               }}
                             >
-                              <Button type="submit" variant="outline" className="min-h-10 w-full">
+                              <PendingSubmitButton
+                                variant="outline"
+                                className="min-h-10 w-full"
+                                pendingLabel="Resetting…"
+                              >
                                 Reset
-                              </Button>
+                              </PendingSubmitButton>
                             </form>
                             <form
                               action={async () => {
@@ -242,9 +258,13 @@ export default async function RunTournamentPage({ params }: PageProps) {
                                 });
                               }}
                             >
-                              <Button type="submit" variant="outline" className="min-h-10 w-full">
+                              <PendingSubmitButton
+                                variant="outline"
+                                className="min-h-10 w-full"
+                                pendingLabel="Cancelling…"
+                              >
                                 Cancel
-                              </Button>
+                              </PendingSubmitButton>
                             </form>
                           </div>
                         </div>
@@ -310,9 +330,12 @@ export default async function RunTournamentPage({ params }: PageProps) {
                         defaultValue={match.sideTwoScore ?? ""}
                         placeholder="Side 2 score"
                       />
-                      <Button type="submit" className="sm:col-span-2 min-h-10">
+                      <PendingSubmitButton
+                        className="sm:col-span-2 min-h-10"
+                        pendingLabel="Saving score…"
+                      >
                         Submit final score
-                      </Button>
+                      </PendingSubmitButton>
                     </form>
 
                     <div className="grid gap-2 sm:grid-cols-3">
@@ -326,9 +349,13 @@ export default async function RunTournamentPage({ params }: PageProps) {
                           });
                         }}
                       >
-                        <Button type="submit" variant="outline" className="min-h-10 w-full">
+                        <PendingSubmitButton
+                          variant="outline"
+                          className="min-h-10 w-full"
+                          pendingLabel="Starting…"
+                        >
                           Start
-                        </Button>
+                        </PendingSubmitButton>
                       </form>
                       <form
                         action={async () => {
@@ -340,9 +367,13 @@ export default async function RunTournamentPage({ params }: PageProps) {
                           });
                         }}
                       >
-                        <Button type="submit" variant="outline" className="min-h-10 w-full">
+                        <PendingSubmitButton
+                          variant="outline"
+                          className="min-h-10 w-full"
+                          pendingLabel="Resetting…"
+                        >
                           Reset
-                        </Button>
+                        </PendingSubmitButton>
                       </form>
                       <form
                         action={async () => {
@@ -354,9 +385,13 @@ export default async function RunTournamentPage({ params }: PageProps) {
                           });
                         }}
                       >
-                        <Button type="submit" variant="outline" className="min-h-10 w-full">
+                        <PendingSubmitButton
+                          variant="outline"
+                          className="min-h-10 w-full"
+                          pendingLabel="Cancelling…"
+                        >
                           Cancel
-                        </Button>
+                        </PendingSubmitButton>
                       </form>
                     </div>
                   </div>

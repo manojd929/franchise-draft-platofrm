@@ -37,7 +37,7 @@ interface DraftRoomClientProps {
   enableOwnerPick: boolean;
   /**
    * Franchise-owner phone route: never show nominate controls unless this login owns the on-clock team;
-   * hide full snake order; clarify copy so other franchises' turns are read-only.
+   * hide full pick order; clarify copy so other franchises' turns are read-only.
    */
   franchiseOwnerPhoneMode?: boolean;
   /** When set, rendering uses this snapshot (e.g. admin embed with single upstream sync). */
@@ -84,6 +84,7 @@ export function DraftRoomClient({
   deskTwoColumnLayout = false,
 }: DraftRoomClientProps) {
   const [snapshot, setSnapshot] = useState(initialSnapshot);
+  const [submittingPlayerId, setSubmittingPlayerId] = useState<string | null>(null);
   const liveBoardSync = syncEnabled && !controlledSnapshot;
 
   const refreshedSnapshot = controlledSnapshot ?? snapshot;
@@ -152,17 +153,25 @@ export function DraftRoomClient({
     Boolean(currentTurnTeamId) &&
     teamsById[currentTurnTeamId ?? ""]?.ownerUserId === viewerUserId;
 
+  const viewerPendingNomination =
+    viewerOwnsClock &&
+    effectiveSnapshot.pendingPickTeamId === currentTurnTeamId &&
+    effectiveSnapshot.pendingPickPlayerId !== null;
+
   const handleNominate = useCallback(
     async (playerId: string) => {
+      setSubmittingPlayerId(playerId);
       const result = await requestPickAction({
         tournamentSlug: slug,
         playerId,
         idempotencyKey: crypto.randomUUID(),
       });
       if (!result.ok) {
+        setSubmittingPlayerId(null);
         toast.error(result.error);
         return;
       }
+      setSubmittingPlayerId(null);
       toast.success("Your pick was sent. The admin will confirm it.");
     },
     [slug],
@@ -341,9 +350,16 @@ export function DraftRoomClient({
             )}
             {draftLive && currentTeam ? (
               viewerOwnsClock ? (
-                <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                  Your franchise is on the clock — tap a player below.
-                </p>
+                viewerPendingNomination ? (
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                    Pick sent for review. Other players stay locked until the organizer confirms or
+                    declines it.
+                  </p>
+                ) : (
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                    Your franchise is on the clock — tap a player below.
+                  </p>
+                )
               ) : (
                 <p className="text-xs text-muted-foreground">
                   <span className="font-medium text-foreground">{currentTeam.name}</span> is picking
@@ -371,7 +387,7 @@ export function DraftRoomClient({
 
   const sidebarOrderCard = (
     <div className="rounded-xl border border-border/80 bg-card/30 p-3 backdrop-blur-md sm:p-4">
-      <p className="text-xs font-medium text-muted-foreground">Pick order (snake)</p>
+      <p className="text-xs font-medium text-muted-foreground">Pick order</p>
       {franchiseOwnerPhoneMode ? (
         <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
           Full turn order is hidden on this screen so you only act for your franchise. The room
@@ -645,6 +661,9 @@ export function DraftRoomClient({
           !player.isLocked &&
           !player.runsFranchiseLogin &&
           !player.assignedTeamId;
+        const nominateLoading = submittingPlayerId === player.id;
+        const nominateDisabled =
+          !canNominateThisCard || viewerPendingNomination || submittingPlayerId !== null;
 
         return (
           <PlayerCard
@@ -662,7 +681,8 @@ export function DraftRoomClient({
                 ? () => void handleNominate(player.id)
                 : undefined
             }
-            nominateDisabled={!canNominateThisCard}
+            nominateDisabled={nominateDisabled}
+            nominateLoading={nominateLoading}
           />
         );
       })}
@@ -706,6 +726,16 @@ export function DraftRoomClient({
             {currentTeam?.name ?? "Another franchise"}
           </span>{" "}
           is picking. Submit buttons appear only when your franchise is on the clock.
+        </div>
+      ) : null}
+
+      {viewerPendingNomination ? (
+        <div
+          className="rounded-xl border border-amber-400/45 bg-amber-500/10 px-4 py-3 text-sm leading-relaxed text-amber-950 dark:text-amber-100"
+          role="status"
+        >
+          Your latest pick is waiting for organizer approval. You cannot choose another player until
+          they confirm or decline it.
         </div>
       ) : null}
 
